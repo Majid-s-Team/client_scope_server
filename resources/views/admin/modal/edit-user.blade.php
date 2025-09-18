@@ -33,11 +33,12 @@
                         <label>Reports To</label>
                         <select name="user_report" class="form-control">
                             <option value=""> Select User </option>
-                            @if( count($companyUsers) )
-                                @foreach($companyUsers as $companyUser)
-                                    <option {{ !empty($edit_user['report_to_user']) && $edit_user['report_to_user']['id'] == $companyUser->id ? 'selected' : '' }}  value="{{ $companyUser->id }}">{{ $companyUser->name }}</option>
-                                @endforeach
-                            @endif
+                            @if(!empty($companyUsers) && is_countable($companyUsers) && count($companyUsers))
+    @foreach($companyUsers as $companyUser)
+        <option {{ !empty($edit_user['report_to_user']) && $edit_user['report_to_user']['id'] == $companyUser->id ? 'selected' : '' }} value="{{ $companyUser->id }}">{{ $companyUser->name }}</option>
+    @endforeach
+@endif
+
                         </select>
                     </div>
                     <div class="form-group col-md-4">
@@ -48,11 +49,11 @@
                         <label>Assign To Team</label>
                         <select name="team_id" class="form-control">
                             <option value=""> Select Team </option>
-                            @if( count($companyTeams) )
-                                @foreach($companyTeams as $companyTeam)
-                                    <option value="{{ $companyTeam->id }}">{{ $companyTeam->title }}</option>
-                                @endforeach
-                            @endif
+                          @if(!empty($companyTeams) && is_countable($companyTeams) && count($companyTeams))
+    @foreach($companyTeams as $companyTeam)
+        <option value="{{ $companyTeam->id }}">{{ $companyTeam->title }}</option>
+    @endforeach
+@endif
                         </select>
                     </div>
                     <div class="form-group col-md-4">
@@ -100,27 +101,27 @@
                     <div class="col-md-12">
                         <h4 class="my-3 font-weight-bold">Company Metric Targets</h4>
                     </div>
-                    @if( count($metrices) )
-                        @foreach( $metrices as $metrice )
-                            <div class="form-group col-md-4">
-                                <label>{{ !empty($metrice->custom_metric_title) ? $metrice->custom_metric_title : $metrice->title }} (%)</label>
-                                <input type="text" value="{{ $metrice->value }}" name="metric[{{ $metrice->slug }}]" id="user_{{ $metrice->slug }}" class="form-control" placeholder="{{ $metrice->title }}">
-                            </div>
-                        @endforeach
-                    @endif
+                  @if(!empty($metrices) && is_countable($metrices) && count($metrices))
+    @foreach($metrices as $metrice)
+        <div class="form-group col-md-4">
+            <label>{{ $metrice->custom_metric_title ?? $metrice->title }} (%)</label>
+            <input type="text" value="{{ $metrice->value }}" name="metric[{{ $metrice->slug }}]" class="form-control">
+        </div>
+    @endforeach
+@endif
                 </div>
                 <div class="row">
                     <div class="col-md-12">
                         <h4 class="my-3 font-weight-bold">User Annual KPI Targets  <small class="ft-14">to hit sales rep income target</small></h4>
                     </div>
-                    @if( count($kpi_groups) )
-                        @foreach( $kpi_groups as $kpi_group )
-                            <div class="form-group col-md-4">
-                                <label>{{ $kpi_group->title }}</label>
-                                <input type="text" readonly="readonly" id="user_annual_{{ $kpi_group->slug }}" name="kpi_target_sale[kpi_annual_target][{{ $kpi_group->slug }}]" class="form-control" placeholder="{{ $kpi_group->title }}">
-                            </div>
-                        @endforeach
-                    @endif
+                 @if(!empty($kpi_groups) && is_countable($kpi_groups) && count($kpi_groups))
+    @foreach($kpi_groups as $kpi_group)
+        <div class="form-group col-md-4">
+            <label>{{ $kpi_group->title }}</label>
+            <input type="text" readonly id="user_annual_{{ $kpi_group->slug }}" class="form-control">
+        </div>
+    @endforeach
+@endif
                 </div>
                 <div class="row">
                     <div class="col-md-12">

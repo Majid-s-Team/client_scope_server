@@ -46,7 +46,8 @@
                     <div class="form-group col-md-4">
                         <!-- <label>Start Date Time</label> -->
                         <div class="input-group date id_0">
-                            <input type="text" required name="start_datetime" class="form-control" placeholder="End Date time" value="{{ date("Y-m-d\TH:i:s", strtotime($appointment->start_datetime)) }}">
+                            <input type="text" required name="start_datetime" class="form-control" placeholder="Start Date time"        value="{{ date('Y-m-d\TH:i', strtotime($appointment->start_datetime)) }}">
+
                             <span class="input-group-addon calender-icon">
                                 <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
                             </span>
@@ -55,7 +56,7 @@
                     <div class="form-group col-md-4">
                         <!-- <label>End Date Time</label> -->
                         <div class="input-group date id_0">
-                            <input type="text" required name="end_datetime" class="form-control" placeholder="End Date time" value="{{ date("Y-m-d\TH:i:s", strtotime($appointment->end_datetime)) }}">
+                            <input type="text" required name="end_datetime" class="form-control" placeholder="End Date time" value="{{ date('Y-m-d\TH:i', strtotime($appointment->end_datetime)) }}">
                             <span class="input-group-addon calender-icon">
                                 <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
                             </span>

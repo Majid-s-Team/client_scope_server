@@ -66,7 +66,7 @@ class TeamController extends RestController
      */
     public function beforeStoreLoadModel($request)
     {
-        $checkRecord = Team::where('user_id',$request['user']->id)
+        $checkRecord = Team::where('user_id',auth()->user()->id)
                             ->where('title',$request['title'])
                             ->count();
         if( $checkRecord ){
@@ -88,7 +88,9 @@ class TeamController extends RestController
      */
     public function beforeUpdateLoadModel($request,$id)
     {
-        $checkRecord = Team::where('user_id',$request['user']->id)
+        $user = auth()->user()->id;
+        // dd($user);
+        $checkRecord = Team::where('user_id',auth()->user()->id)
             ->where('title',$request['title'])
             ->where('id','!=',$id)
             ->count();
@@ -103,7 +105,7 @@ class TeamController extends RestController
      */
     public function beforeDestroyLoadModel($request,$id)
     {
-        $checkRecord = Team::where('user_id',$request['user']->id)
+        $checkRecord = Team::where('user_id',auth()->user()->id)
                         ->where('id',$id)
                         ->count();
         if( $checkRecord == 0 ){

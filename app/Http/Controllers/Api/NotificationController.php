@@ -26,7 +26,7 @@ class NotificationController extends Controller
 
     public function getNotificationSetting(Request $request)
     {
-        $record = NotificationSetting::getNotificationSetting($request['user']->id);
+        $record = NotificationSetting::getNotificationSetting(auth()->user()->id);
 
         $this->__is_paginate   = false;
         $this->__collection = false;
@@ -56,7 +56,7 @@ class NotificationController extends Controller
     public function deleteNotification(Request $request, $notitification_id)
     {
         //delete notification
-        Notification::deleteNotification($notitification_id,$request['user']->id);
+        Notification::deleteNotification($notitification_id,auth()->user()->id);
         //get notification
         $records = Notification::getNotifications($request->all());
         return $this->__sendResponse($records,200,'Notification setting saved successfully');

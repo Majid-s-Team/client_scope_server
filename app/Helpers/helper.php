@@ -84,10 +84,14 @@ if (!function_exists('get_status_id')) {
 if (!function_exists('get_user')) {
     function get_user()
     {
-        $user = Auth::user();
+        // $user = Auth::user();
+        $user = auth()->user();
+
+
         if (!$user) {
             return null;
         }
+        // dd($user->id);
         
         $record = \App\Models\User::getUserByID($user->id);
         $record->gateway_default_card_json = json_decode($record->gateway_default_card_json);
@@ -95,6 +99,11 @@ if (!function_exists('get_user')) {
         return $record;
     }
 }
+function sanitizeNumber($value) {
+    $value = preg_replace('/[^\d.]/', '', $value);
+    return is_numeric($value) ? $value : 0;
+}
+
 
 /**
  * Check user session

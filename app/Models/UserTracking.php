@@ -66,7 +66,7 @@ class UserTracking extends Model
     */
     public function hook_before_add(&$postdata)
     {
-        $user = $postdata['user']->toArray();
+        $user = auth()->user()->toArray();
         $postdata['company_user_id']  = $user['user_company']['id'];  
         $postdata['tracking_user_id'] = $user['id'];
         $postdata['created_at']       = Carbon::now();     

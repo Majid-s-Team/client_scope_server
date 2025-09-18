@@ -32,7 +32,7 @@ class UserPinController extends Controller
         // dd($request->all());
         $data['companyStatuses'] = $this->getCompanyStatuses();
         $data['companyUsers'] = $this->getCompanyUsers();
-        $response = $this->internalCall('/api/user-pin', 'GET', $request->all(), get_user()->token);
+        $response = $this->internalCall('/api/user-pin', 'GET', $request->all(), auth()->user()->token);
         $data['userPins'] = $response->data;
         return view('admin.user-pin.index',$data);
     }
@@ -69,7 +69,7 @@ class UserPinController extends Controller
 
     private function _savePin($request)
     {
-        $user_token             = get_user()->token;
+        $user_token             = auth()->user()->token;
         $params                 = $request->all();
         $response   = $this->internalCall('/api/user-pin','POST',$params,$user_token);
         if( $response->code != 200 ){
@@ -89,7 +89,7 @@ class UserPinController extends Controller
     public function getCompanyStatuses()
     {
         $data = [];
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses = $this->internalCall('api/status','GET',[],$user_token);
         if( $responses->code == 200){
             $data = $responses->data;
@@ -107,7 +107,7 @@ class UserPinController extends Controller
         }else{
             $params['company_user_id'] = $user->userCompany->id;
         }
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses = $this->internalCall('api/user','GET',$params,$user_token);
         
         if( $responses->code == 200){
@@ -119,7 +119,9 @@ class UserPinController extends Controller
     public function getCustomFields($user_pin_id = 0)
     {
         $data   = [];
-        $user_token = get_user()->token;
+        // $user_token = auth()->user()->token;
+        $user_token = auth()->user()->token;
+        // dd($user_token);
         $responses = $this->internalCall('api/custom-fields','GET',['user_pin_id' => $user_pin_id ],$user_token);
         if( $responses->code == 200){
             $data = $responses->data;
@@ -132,7 +134,7 @@ class UserPinController extends Controller
         if ($request->isMethod('post'))
             return self::_updatePin($request,$id);
 
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses = $this->internalCall('api/user-pin/' . $id, 'GET', [], $user_token);
         $data['record']          = $responses->data;
         $data['companyUsers']    = $this->getCompanyUsers();
@@ -144,7 +146,7 @@ class UserPinController extends Controller
 
     private function _updatePin($request,$id)
     {
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params     = $request->all();
         $params['_method'] = 'PUT';
         $response   = $this->internalCall('/api/user-pin/' . $id,'POST',$params,$user_token);
@@ -190,8 +192,9 @@ class UserPinController extends Controller
 
         $records['data'] = [];
         $data    = [];
-        $responses = $this->internalCall('/api/user-pin', 'GET', $params, get_user()->token);
+        $responses = $this->internalCall('/api/user-pin', 'GET', $params, auth()->user()->token);
         // set data grid output
+        // dd($responses);
         if(count($responses->data))
         {
             foreach($responses->data as $record){
@@ -237,7 +240,7 @@ class UserPinController extends Controller
 
     public function deletePin(Request $request)
     {
-        $user_token  = get_user()->token;
+        $user_token  = auth()->user()->token;
         $user_pin_id = $request->input('id');
         $responses   = $this->internalCall('api/user-pin/' . $user_pin_id, 'DELETE', [], $user_token);
         return response()->json($responses);

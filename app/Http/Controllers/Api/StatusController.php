@@ -87,14 +87,16 @@ class StatusController extends RestController
      */
     public function beforeStoreLoadModel($request)
     {
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $user = auth()->user();
+        // dd($user->id);
+        $userRole = UserRole::getUserRoleByUserId($user->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = $user->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
             $company_id  = $userCompany->id;
         }
-        //$checkMetricKpiGroup = UserPinStatus::checkMetricKpiGroup($company_id,$request['user']->id,$request->all());
+        //$checkMetricKpiGroup = UserPinStatus::checkMetricKpiGroup($company_id,auth()->user()->id,$request->all());
         // if( $checkMetricKpiGroup > 0 ){
         //     $this->__is_error = true;
         //     $error_message['message'] = 'This Kpi group has already associated to another company metric';
@@ -129,11 +131,14 @@ class StatusController extends RestController
      */
     public function beforeDestroyLoadModel($request)
     {
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        //getuser
+        $user = auth()->user();
+        // dd($request);
+        $userRole = UserRole::getUserRoleByUserId($user->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = $user->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
             $company_id  = $userCompany->id;
         }
         $checkRecord = UserPinStatus::where('company_user_id',$company_id)->count();

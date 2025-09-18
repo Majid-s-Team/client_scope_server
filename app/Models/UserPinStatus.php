@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class UserPinStatus extends Model
 {
@@ -48,11 +49,12 @@ class UserPinStatus extends Model
    |
    */
     public function hook_query_index(&$query,$request, $id = '') {
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $user = auth()->user(); 
+        $userRole = UserRole::getUserRoleByUserId($user->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = $user->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
             $company_id  = $userCompany->id;
         }
         $query->select('user_pin_status.*')
@@ -77,16 +79,19 @@ class UserPinStatus extends Model
     */
     public function hook_before_add(&$postdata)
     {
-        $userRole = UserRole::getUserRoleByUserId($postdata['user']->id);
+        // dd($postdata);
+        $user = auth()->user();
+        // dd($user->id);
+        $userRole = UserRole::getUserRoleByUserId($user->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $postdata['user']->id;
+            $company_id = $user->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($postdata['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
             $company_id  = $userCompany->id;
         }
         $postdata['company_user_id'] = $company_id;
-        $postdata['creator_user_id'] = $postdata['user']->id;
-        $postdata['slug']            = str_slug($postdata['title']);
+        $postdata['creator_user_id'] = $user->id;
+$postdata['slug'] = Str::slug($postdata['title']);
         $postdata['created_at']      = Carbon::now();
     }
 
@@ -124,7 +129,7 @@ class UserPinStatus extends Model
     */
     public function hook_before_edit($request, $id, &$postData)
     {
-        $postData['slug']            = str_slug($postData['title']);
+        $postData['slug']            = Str::slug($postData['title']);
         $postData['updated_at']      = Carbon::now();
     }
 

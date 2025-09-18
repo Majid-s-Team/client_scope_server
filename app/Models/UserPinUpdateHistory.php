@@ -111,12 +111,14 @@ class UserPinUpdateHistory extends Model
 
     public static function addPinStatusHistory($params)
     {
+        
         self::insert([
-            'user_id'        => $params['user']->id,
+            'user_id'        => $params['updated_by'],
             'user_pin_id'    => $params['user_pin_id'],
             'user_pin_status_id' => $params['pin_status_id'],
             'record_json'    => !empty($params['record_json']) ? $params['record_json'] : NULL,
             'created_at'     => Carbon::now(),
         ]);
+        // dd($params);
     }
 }

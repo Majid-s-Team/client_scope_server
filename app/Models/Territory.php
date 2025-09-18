@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\URL;
-
+use Illuminate\Support\Str;
 class Territory extends Model
 {
     use SoftDeletes, RestModel;
@@ -71,11 +71,11 @@ class Territory extends Model
    */
     public function hook_query_index(&$query,$request, $id = '') {
         //Your code here
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $userRole = UserRole::getUserRoleByUserId(auth()->user()->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = auth()->user()->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID(auth()->user()->id);
             $company_id  = $userCompany->id;
         }
         $query->with(['creatorUser','assigneeUser'])
@@ -109,7 +109,7 @@ class Territory extends Model
     public function hook_before_add(&$postdata)
     {
         $postdata['creator_user_id'] = $postdata['user']->id;
-        $postdata['slug']            = str_slug($postdata['title']);
+        $postdata['slug']            = Str::slug($postdata['title']);
         $postdata['status_id']       = get_status_id('active');
         $postdata['created_at']      = Carbon::now();
     }
@@ -203,7 +203,7 @@ class Territory extends Model
     */
     public function hook_before_edit($request, $id, &$postData)
     {
-        $postData['slug'] = str_slug($postData['title']);
+        $postData['slug'] = Str::slug($postData['title']);
         $postData['updated_at'] = Carbon::now();
     }
 

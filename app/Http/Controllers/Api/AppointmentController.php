@@ -123,7 +123,7 @@ class AppointmentController extends RestController
      */
     public function beforeDestroyLoadModel($request)
     {
-        $cehckRecord = Appointment::where('creator_user_id',$request['user']->id)->count();
+        $cehckRecord = Appointment::where('creator_user_id',auth()->user()->id)->count();
         if( $cehckRecord == 0 ){
             $this->__is_error = true;
             return $this->__sendError('Validation message',['message' => 'invalid record id'],400);

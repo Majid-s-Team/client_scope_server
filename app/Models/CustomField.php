@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class CustomField extends Model
 {
@@ -132,6 +133,7 @@ class CustomField extends Model
 
     public static function addCustomFields($params)
     {
+        // dd('s');
         $field_types = $params['field_type'];
         $label = $params['label'];
         for($i=0; $i < count($field_types); $i++ )
@@ -140,7 +142,7 @@ class CustomField extends Model
                 'company_user_id' => get_user()->userCompany->id,
                 'creator_id'      => get_user()->id,
                 'label'           => $label[$i],
-                'field_name'      => str_slug($label[$i],'_'),
+                    'field_name'      => Str::slug($label[$i], '_'), // <-- updated
                 'field_type'      => $field_types[$i],
                 'created_at'      => Carbon::now(),
             ];

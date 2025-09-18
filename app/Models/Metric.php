@@ -114,20 +114,21 @@ class Metric extends Model
 
     public static function getMetrices($user_company_id = 0)
     {
-        $query = self::select('metrices.*')
-                        ->selectRaw('IFNULL(cmt.value,0) AS value, ups.custom_metric_title')
-                        ->leftJoin('company_metric_target AS cmt',function($leftJoin) use ($user_company_id){
-                            $leftJoin->on('cmt.metric_id','=','metrices.id')
-                                     ->where('cmt.user_company_id','=',$user_company_id);
-                        })
-                        ->leftJoin('user_pin_status AS ups',function($leftJoin) use ($user_company_id){
-                            $leftJoin->on('ups.metric_id','=','metrices.id')
-                                ->where('ups.company_user_id','=',$user_company_id);
-                        })
-                        ->where('metrices.status',1)
-                        ->groupBy('metrices.id')
-                        ->orderBy('metrices.sort_order','asc')
-                        ->get();
+       $query = self::select('metrices.*')
+    ->selectRaw('IFNULL(MAX(cmt.value),0) AS value, MAX(ups.custom_metric_title) as custom_metric_title')
+    ->leftJoin('company_metric_target AS cmt', function($leftJoin) use ($user_company_id){
+        $leftJoin->on('cmt.metric_id','=','metrices.id')
+                 ->where('cmt.user_company_id','=',$user_company_id);
+    })
+    ->leftJoin('user_pin_status AS ups', function($leftJoin) use ($user_company_id){
+        $leftJoin->on('ups.metric_id','=','metrices.id')
+                 ->where('ups.company_user_id','=',$user_company_id);
+    })
+    ->where('metrices.status',1)
+    ->groupBy('metrices.id')
+    ->orderBy('metrices.sort_order','asc')
+    ->get();
+
         return $query;
     }
 

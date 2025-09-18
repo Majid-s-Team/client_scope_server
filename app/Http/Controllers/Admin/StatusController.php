@@ -29,7 +29,7 @@ class StatusController extends Controller
     public function index(Request $request)
     {
         $params['user_id'] = get_user()->id;
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $companyStatuses   = $this->internalCall('/api/status','GET',$params,$user_token);
         if($companyStatuses->code == 200){
             $view_data['company_statuses'] = $companyStatuses->data;
@@ -55,7 +55,7 @@ class StatusController extends Controller
 
     private function _saveStatus($request)
     {
-        $user_token             = get_user()->token;
+        $user_token             = auth()->user()->token;
         $params                 = $request->all();
         $pin_status_image       = explode('|',$params['image_url']);
         $params['color']        = $pin_status_image[0];
@@ -75,35 +75,62 @@ class StatusController extends Controller
         }
         return response()->json($this->_ajax_response);
     }
-
     public function editStatus(Request $request)
-    {
-        if(isset($request->all()['_method']) && $request->all()['_method'] == 'delete')
-            return self::_deleteStatus($request);
-
-        if( $request->isMethod('post') )
-            return self::_updateStatus($request);
-
-        $user_token = get_user()->token;
-        $params     = $request->all();
-
-        $responsePin = $this->internalCall('/api/status/'.$request->id,'GET',$params,$user_token);
-        if($responsePin->code == 200){
-            $view_data['pin'] = $responsePin->data;
-        }
-        $view_data['kpi_groups'] = KpiGroups::getKpiGroup($request->id);
-        $view_data['metrices']   = Metric::getMetrices();
-        $html = view('admin.modal.edit-status', $view_data)->render();
-        $data = [
-            'html' => $html
-        ];
-
-        return response()->json($data);
+{
+    if ($request->isMethod('delete')) {
+        return $this->_deleteStatus($request);
     }
+
+    if ($request->isMethod('post')) {
+        return $this->_updateStatus($request);
+    }
+
+    $user_token = auth()->user()->token;
+    $params     = $request->all();
+
+    $responsePin = $this->internalCall('/api/status/'.$request->id,'GET',$params,$user_token);
+    if($responsePin->code == 200){
+        $view_data['pin'] = $responsePin->data;
+    }
+    $view_data['kpi_groups'] = KpiGroups::getKpiGroup($request->id);
+    $view_data['metrices']   = Metric::getMetrices();
+    $html = view('admin.modal.edit-status', $view_data)->render();
+    $data = [
+        'html' => $html
+    ];
+
+    return response()->json($data);
+}
+
+
+    // public function editStatus(Request $request)
+    // {
+    //     if(isset($request->all()['_method']) && $request->all()['_method'] == 'delete')
+    //         return self::_deleteStatus($request);
+
+    //     if( $request->isMethod('post') )
+    //         return self::_updateStatus($request);
+
+    //     $user_token = auth()->user()->token;
+    //     $params     = $request->all();
+
+    //     $responsePin = $this->internalCall('/api/status/'.$request->id,'GET',$params,$user_token);
+    //     if($responsePin->code == 200){
+    //         $view_data['pin'] = $responsePin->data;
+    //     }
+    //     $view_data['kpi_groups'] = KpiGroups::getKpiGroup($request->id);
+    //     $view_data['metrices']   = Metric::getMetrices();
+    //     $html = view('admin.modal.edit-status', $view_data)->render();
+    //     $data = [
+    //         'html' => $html
+    //     ];
+
+    //     return response()->json($data);
+    // }
 
     private function _updateStatus($request)
     {
-        $user_token          = get_user()->token;
+        $user_token          = auth()->user()->token;
         $params              = $request->all();
         $params['_method']   = 'PUT';
         $pin_status_image    = explode('|',$params['image_url']);
@@ -126,10 +153,14 @@ class StatusController extends Controller
     }
 
     private function _deleteStatus($request){
-        $user_token                     = get_user()->token;
+        // $user_token                     = auth()->user()->token;
+        $user_token = Auth::user() ? Auth::user()->token : null;
+
         $params                         = $request->all();
         $params['_method']              = "DELETE";
+        // dd($user_token);
         $response   = $this->internalCall("/api/status/$request->id",'DELETE',$params,$user_token);
+        // dd($response);
         if( $response->code != 200 ){
             return redirect('admin/statuses')->with('message', $response->message);
         }else{

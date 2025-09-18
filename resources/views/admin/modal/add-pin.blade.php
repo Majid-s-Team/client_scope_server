@@ -104,19 +104,22 @@
                   </div>
                </div>
                <div class="row">
-                  @if (!empty($getCustomFields))
-                  @foreach ($getCustomFields as $customFields)
-                  <div class="form-group col-md-6">
-                     <label>{{ $customFields->label }}</label>
-                     @if ($customFields->field_type == 'text')
-                     <input type="text" name="custom_fields[{{ $customFields->id }}]" value=""
+            @if (!empty($getCustomFields))
+    @foreach ($getCustomFields as $customFields)
+        @if (is_object($customFields) && isset($customFields->label))
+            <div class="form-group col-md-6">
+                <label>{{ $customFields->label }}</label>
+                @if ($customFields->field_type == 'text')
+                    <input type="text" name="custom_fields[{{ $customFields->id }}]" value=""
                         class="form-control" placeholder="{{ $customFields->label }}">
-                     @else
-                     <textarea class="form-control" name="custom_fields[{{ $customFields->id }}]"></textarea>
-                     @endif
-                  </div>
-                  @endforeach
-                  @endif
+                @else
+                    <textarea class="form-control" name="custom_fields[{{ $customFields->id }}]"></textarea>
+                @endif
+            </div>
+        @endif
+    @endforeach
+@endif
+
                </div>
                <div class="row">
                   <div class="form-group col-md-12">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ImportHistory;
 use App\Models\UserPinStatus;
 use App\Models\User;
+use Illuminate\Support\Str;
 use App\Models\UserCompanyMapping;
 use App\Models\UserCompanyPinMapping;
 use App\Models\UserPin;
@@ -131,7 +132,7 @@ class ImportHistoryController extends Controller
                     $latitude       = $getGeoCodeData['results'][0]['geometry']['location']['lat'];
                     $longitude      = $getGeoCodeData['results'][0]['geometry']['location']['lng'];
                     }
-                    $pin_status     = str_slug($params['current_status'][$i]);
+                    $pin_status     = Str::slug($params['current_status'][$i]);
                     if( !empty($users[$params['assign_to'][$i]]) && !empty($statuses[$pin_status]) )
                     {
                         $pin_data[] = [
@@ -250,7 +251,7 @@ class ImportHistoryController extends Controller
         $statuses = UserPinStatus::getCompanyStatuses(get_user()->id);
         if( count($statuses) ){
             foreach($statuses as $status){
-                $data[str_slug($status->title)] = $status->id;
+                $data[Str::slug($status->title)] = $status->id;
             }
         }
         return $data;

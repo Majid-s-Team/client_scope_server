@@ -94,7 +94,7 @@ class ChatController extends RestController
 
     public function getRecentMessage(Request $request)
     {
-        $recent_chat_users = ChatRoom::getRecentChatUser($request['user']->id);
+        $recent_chat_users = ChatRoom::getRecentChatUser(auth()->user()->id);
 
         $this->__collection = false;
         return $this->__sendResponse($recent_chat_users,200, 'Recent Chat retrieved successfully');
@@ -109,7 +109,7 @@ class ChatController extends RestController
         if( $this->__is_error )
             return $response;
 
-        $recent_chat = ChatMessage::getRoomChat($request['room_id'],$request['user']->id);
+        $recent_chat = ChatMessage::getRoomChat($request['room_id'],auth()->user()->id);
 
         $this->__collection = false;
         return $this->__sendResponse($recent_chat,200, 'Recent Chat retrieved successfully');

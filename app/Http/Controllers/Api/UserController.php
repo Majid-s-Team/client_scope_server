@@ -311,7 +311,8 @@ class UserController extends RestController
 
     public function leaderBoard(Request $request)
     {
-        $leaderBoard = User::getleaderBoard($request['user']->id,NULL,$request->all());
+        $user = auth()->user();
+        $leaderBoard = User::getleaderBoard($user->id,NULL,$request->all());
 
         $this->__collection = false;
         return $this->__sendResponse($leaderBoard, 200, "Leader board retrieved successfully");
@@ -320,7 +321,7 @@ class UserController extends RestController
     public function getManageUsers(Request $request)
     {
         $parent_users = [];
-        $users = User::getReportingUsers($request['user']->id);
+        $users = User::getReportingUsers(auth()->user()->id);
         if( count($users) )
         {
             $users = $users->toArray();

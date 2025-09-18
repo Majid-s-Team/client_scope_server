@@ -122,9 +122,11 @@
    const tableContainer = document.querySelector('.table-container');
   const tableHeader = document.querySelector('thead');
 
-  tableContainer.addEventListener('scroll', function() {
-    tableHeader.style.transform = `translateY(${this.scrollTop}px)`;
-  });
+if (tableContainer && tableHeader) {
+    tableContainer.addEventListener('scroll', function() {
+        tableHeader.style.transform = `translateY(${this.scrollTop}px)`;
+    });
+}
 </script>
 
 @endpush @endsection

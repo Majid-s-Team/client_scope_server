@@ -30,8 +30,15 @@
                      <form action="{{route('admin.edit-status')}}" method="delete" style="display:inline;">
                         <input type="hidden" name="id" value="{{$status->id}}" />
                         <input type="hidden" name="_method" value="delete" />
-                        <button type="submit" class="btn p-0"><img src="{{asset('assets/images/ic_delete.png')}}" class="img-fluid statuses-btn" alt="Delete Image"  /></button>
+                        <!-- <button type="submit" class="btn p-0"><img src="{{asset('assets/images/ic_delete.png')}}" class="img-fluid statuses-btn" alt="Delete Image"  /></button> -->
                      </form>
+                     <form action="{{ route('admin.edit-status', ['id' => $status->id]) }}" method="POST" style="display:inline;">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="btn p-0">
+        <img src="{{asset('assets/images/ic_delete.png')}}" class="img-fluid statuses-btn" alt="Delete Image" />
+    </button>
+</form>
                   </div>
                </div>
                <div class="pt-5 mt-5">

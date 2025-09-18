@@ -25,7 +25,7 @@ class TeamController extends Controller
     public function index(Request $request)
     {
         $params['user_id'] = get_user()->id;
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $companyStatuses   = $this->internalCall('/api/team','GET',$params,$user_token);
         if($companyStatuses->code == 200){
             $view_data['teams'] = $companyStatuses->data;
@@ -47,7 +47,7 @@ class TeamController extends Controller
 
     private function _saveTeam($request)
     {
-        $user_token             = get_user()->token;
+        $user_token             = auth()->user()->token;
         $params                 = $request->all();
         $response   = $this->internalCall('/api/team','POST',$params,$user_token);
         if( $response->code != 200 ){
@@ -72,7 +72,7 @@ class TeamController extends Controller
         if( $request->isMethod('post') )
             return self::_updateTeam($request);
 
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params     = $request->all();
 
         $responsePin = $this->internalCall('/api/team/'.$request->id,'GET',$params,$user_token);
@@ -89,7 +89,8 @@ class TeamController extends Controller
 
     private function _updateTeam($request)
     {
-        $user_token          = get_user()->token;
+        $user_token          = auth()->user()->token;
+        // dd($user_token);
         $params              = $request->all();
         $params['_method']   = 'PUT';
         $response   = $this->internalCall("/api/team/" . $params['id'],'POST',$params,$user_token);
@@ -109,7 +110,7 @@ class TeamController extends Controller
 
     private function _deleteTeam($request)
     {
-        $user_token                     = get_user()->token;
+        $user_token                     = auth()->user()->token;
         $params                         = $request->all();
         $params['_method']              = "DELETE";
         $response   = $this->internalCall("/api/team/$request->id",'DELETE',$params,$user_token);

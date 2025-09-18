@@ -11,7 +11,8 @@ class AppointmentController extends Controller
 {
     public function index()
     {
-        $user = get_user();
+        // $user = get_user();
+        $user = auth()->user();
         $user_token = $user->token ?? null;
 
         $params = [
@@ -51,8 +52,8 @@ class AppointmentController extends Controller
             return self::_saveAppointment($request);
         }
 
-        $user_token = get_user()->token;
-        $params['company_user_id'] = get_user()->userCompany->id;
+        $user_token = auth()->user()->token;
+        $params['company_user_id'] = auth()->user()->userCompany->id;
         
         $responseUsers   = $this->internalCall('/api/user','GET',$params,$user_token);
         $responsePins   = $this->internalCall('/api/user-pin','GET',$params,$user_token);
@@ -80,7 +81,7 @@ class AppointmentController extends Controller
 
     private function _saveAppointment($request)
     {
-        $user_token               = get_user()->token;
+        $user_token               = auth()->user()->token;
         $params                   = $request->all();
         $params['start_datetime'] = date('Y-m-d H:i:s', strtotime($params['start_datetime']));
         $params['end_datetime']   = date('Y-m-d H:i:s', strtotime($params['end_datetime']));
@@ -104,13 +105,13 @@ class AppointmentController extends Controller
         if( $request->isMethod('post') ){
             return self::_updateAppointment($request);
         }
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
 
         $params['company_user_id'] = get_user()->toArray()['user_company']['id'];
-        
         $responseUsers   = $this->internalCall('/api/user','GET',$params,$user_token);
         $responsePins   = $this->internalCall('/api/user-pin','GET',$params,$user_token);
         $appointmentDetails   = $this->internalCall("/api/appointment/$request->appointment_id",'GET',$params,$user_token);
+        // dd($appointmentDetails);
         if($responseUsers->code == 200){
             if(count($responseUsers->data) > 0)
                 $view_data['users'] = $responseUsers->data;
@@ -141,7 +142,7 @@ class AppointmentController extends Controller
 
     private function _updateAppointment($request)
     {
-        $user_token                     = get_user()->token;
+        $user_token                     = auth()->user()->token;
         $params                         = $request->all();
         $params['_method']              = 'PUT';
         $params['duration']             = 3;

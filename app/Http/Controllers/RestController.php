@@ -51,6 +51,7 @@ class RestController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request);
         //validation hook
         if(method_exists($this,'validation')){
             $validator = $this->validation('POST');

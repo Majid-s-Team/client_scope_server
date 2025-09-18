@@ -76,30 +76,38 @@ class UserPin extends Model
  |
  */
     public function hook_query_index(&$query,$request, $id = '') {
-        //Your code here
         $params   = $request->all();
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $user = $request->user();
+        // dd($user->id);
+        $userRole = UserRole::getUserRoleByUserId($user->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = $user->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
             $company_id  = $userCompany->id;
         }
-        $query->with(['pinStatus','pinStatusHistory','creatorUser','assigneeUser','appointment.assigneeUser','territory'])
-                ->select('user_pin.*')
-                ->selectRaw("creator.name AS creator_name, assignee.name AS assignee_name, ups.title AS status_title, 
-                updated_user.name AS updated_by,t.title AS territory_title, a.title AS appointment_title, a.notes AS appointment_notes, count('upuh.id') AS num_of_status_changes, DATE(upuh.created_at) AS status_modified_date")
-                ->join('user_company_pin_mapping AS ucpm','ucpm.user_pin_id','=','user_pin.id')
-                ->join('users AS creator','creator.id','=','user_pin.creator_user_id')
-                ->join('users AS assignee','assignee.id','=','user_pin.assignee_user_id')
-                ->join('user_pin_status AS ups','ups.id','=','user_pin.pin_status_id')
-                ->leftJoin('territory AS t','t.id','=','user_pin.territory_id')
-                ->leftJoin('users AS updated_user','updated_user.id','=','user_pin.updated_by')
-                ->leftJoin('appointment AS a','a.user_pin_id','=','user_pin.id')
-                ->leftJoin('user_pin_update_history AS upuh','upuh.user_pin_id','=','user_pin.id')
-                ->where('user_pin.status_id',get_status_id('active'))
-                ->where('ucpm.company_user_id',$company_id)
-                ->groupBy('user_pin.id');
+       $query->with(['pinStatus','pinStatusHistory','creatorUser','assigneeUser','appointment.assigneeUser','territory'])
+    ->select('user_pin.*')
+->selectRaw("creator.name AS creator_name,
+             assignee.name AS assignee_name,
+             ups.title AS status_title,
+             MAX(updated_user.name) AS updated_by_name,
+             MAX(t.title) AS territory_title,
+             MAX(a.title) AS appointment_title,
+             MAX(a.notes) AS appointment_notes,
+             COUNT(upuh.id) AS num_of_status_changes,
+             DATE(MAX(upuh.created_at)) AS status_modified_date")
+    ->join('user_company_pin_mapping AS ucpm','ucpm.user_pin_id','=','user_pin.id')
+    ->join('users AS creator','creator.id','=','user_pin.creator_user_id')
+    ->join('users AS assignee','assignee.id','=','user_pin.assignee_user_id')
+    ->join('user_pin_status AS ups','ups.id','=','user_pin.pin_status_id')
+    ->leftJoin('territory AS t','t.id','=','user_pin.territory_id')
+    ->leftJoin('users AS updated_user','updated_user.id','=','user_pin.updated_by')
+    ->leftJoin('appointment AS a','a.user_pin_id','=','user_pin.id')
+    ->leftJoin('user_pin_update_history AS upuh','upuh.user_pin_id','=','user_pin.id')
+    ->where('user_pin.status_id', get_status_id('active'))
+    ->where('ucpm.company_user_id', $company_id)
+    ->groupBy('user_pin.id');
 
 //        if( $params['user']->userRole->slug != 'company' && $params['user']->user_meta['is_administrator'] != 1 )
 //        {
@@ -223,17 +231,20 @@ class UserPin extends Model
     */
     public function hook_before_add(&$postdata)
     {
-        $user = $postdata['user']->toArray();
+        // $user = $postdata['user']->toArray();
+        $user = auth()->user();
         $latitude                         = round($postdata['latitude'],7);
         $longitude                        = round($postdata['longitude'],7);
-        $postdata['creator_user_id']      = $postdata['user']->id;
+        $postdata['creator_user_id']      = $user->id;
         $postdata['latitude']             = $latitude;
         $postdata['longitude']            = $longitude;
-        $postdata['creator_user_id']      = $postdata['user']->id;
+        $postdata['creator_user_id']      = $user->id;
         $postdata['status_id']            = get_status_id('active');
         $postdata['location_is_verified'] = 0;
         $postdata['created_at']           = Carbon::now();
-        $postdata['territory_id']         = Territory::getTerritoryIdByLatLong($user['user_company']['id'],$latitude,$longitude);
+        $userCompany = $user->userCompany()->first()?->toArray();
+        // $postdata['territory_id']         = Territory::getTerritoryIdByLatLong($user->user_company['id'],$latitude,$longitude);
+        $postdata['territory_id'] = $userCompany? Territory::getTerritoryIdByLatLong($userCompany['company_user_id'], $latitude, $longitude): null;
 
     }
 
@@ -247,8 +258,9 @@ class UserPin extends Model
     public function hook_after_add($record)
     {
         $params                = \Request::all();
+        // dd($record->id);
         $params['user_pin_id'] = $record->id;
-        $params['updated_by']  = $params['user']->id;
+        $params['updated_by']  = $record->id;
         //user pin and company mapping
         $userRole = UserRole::getUserRoleByUserId($record->creator_user_id);
         if( $userRole->slug == 'company' ){
@@ -276,8 +288,9 @@ class UserPin extends Model
             Appointment::createAppointment($params);
         }
         //send push notification
-        if( $record->assignee_user_id != $params['user']->id ){
+        if( $record->assignee_user_id != $params['user_pin_id'] ){
             $target_user = User::where('id',$record->assignee_user_id)->first();
+            // dd($params);
             //get notification setting
             $notificationSetting = NotificationSetting::getNotificationSetting($target_user->id);
             if( !empty($notificationSetting) || $notificationSetting->add_user_pin == 1 )
@@ -285,8 +298,9 @@ class UserPin extends Model
                 if( isset($target_user->id) ){
                     $pin_name =  !empty($record->name) ? $record->name . ' ' : '';
                     $message  = 'The Pin ' .  $pin_name . 'has been created for '. date('F j',strtotime($record->created_at)) .'  '. date('h:i A',strtotime($record->created_at)) .' at '. $record->house_address;
+
                     $notification_data = [
-                        'actor'            => $params['user'],
+                        'actor'            => $params,
                         'target'           => $target_user,
                         'title'            => config('constants.APP_NAME'),
                         'message'          => $message,
@@ -321,7 +335,7 @@ class UserPin extends Model
         $postData['latitude']   = $latitude;
         $postData['longitude']  = $longitude;
         $postData['updated_at'] = Carbon::now();
-        $postData['updated_by'] = $request['user']->id;
+        $postData['updated_by'] = auth()->user()->id;
     }
 
     /*

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -391,11 +392,11 @@ class User extends Authenticatable
      */
     public static  function generateUserName($name)
     {
-        $record = self::where('username',str_slug($name))->count();
+        $record = self::where('username',Str::slug($name))->count();
         if( $record ){
-            $username = str_slug($name) . $record . rand(1,99);
+            $username = Str::slug($name) . $record . rand(1,99);
         }else{
-            $username = str_slug($name);
+            $username = Str::slug($name);
         }
         return $username;
     }
@@ -516,6 +517,32 @@ public static function getUserByID($user_id)
                     ->orderBy('users.id','desc')
                     ->paginate(config('constants.DATATABLE_RECORD_LIMIT'));
         return $users;
+    }
+     public static function getCompanyUsers1($user_id,$search)
+    {
+        $userRole = UserRole::getUserRoleByUserId($user_id);
+        if( $userRole->slug == 'company' ){
+            $company_id = $user_id;
+        }else{
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user_id);
+            $company_id  = $userCompany->id;
+        }
+        $default_image_url = URL::to('images/user-placeholder.png');
+        $query = self::select('users.*')
+                      ->selectRaw("s.title AS status,IFNULL(users.image_url,'$default_image_url') AS image_url")
+                      ->join('user_company_mapping AS ucm','ucm.employee_user_id','=','users.id')
+                      ->join('status AS s','s.id','=','users.status_id')
+                      ->where('ucm.company_user_id',$company_id);
+                      if(!empty($search)){
+                       $query= $query->where(function ($q) use($search){
+                            $q->where('users.first_name',"like","%$search%")
+                            ->orWhere('users.last_name',"like","%$search%");
+                      });
+                      }
+                     
+                     $query= $query->paginate(20);
+                    //   ->get();
+        return $query;
     }
 
     public static function getCompanyUsers($user_id)

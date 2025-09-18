@@ -116,69 +116,77 @@ class CompanySalesPlan extends Model
         //Your code here
     }
 
-    public static function saveCompanyPlan($params)
-    {
-        //get current user
-        $current_user = get_user();
-        //delete old company sale plan data
-        self::where('company_user_id',$current_user->userCompany->id)->forceDelete();
-        CompanyMetricTarget::where('user_company_id',$current_user->userCompany->id)->forceDelete();
-        CompanyKpiTargetSale::where('user_company_id',$current_user->userCompany->id)->forceDelete();
+// Helper function to remove commas and ensure numeric value
+function sanitizeNumber($number) {
+    return is_string($number) ? str_replace(',', '', $number) : $number;
+}
 
-        //save new company plan
-        $record = self::create([
-            'company_user_id' => $current_user->userCompany->id,
-            'company_annual_sales_target' => $params['company_annual_sales_target'],
-            'company_year_to_date_sold' => $params['company_year_to_date_sold'],
-            'left_to_sell' => $params['left_to_sell'],
-            'company_average_revenue_per_sale' => $params['company_average_revenue_per_sale'],
-            'work_week_left_for_the_year' => $params['work_week_left_for_the_year'],
-            'work_month_left_for_the_year' => $params['work_month_left_for_the_year'],
-            'company_sales_needed_per_week' => $params['company_sales_needed_per_week'],
-            'company_sales_needed_per_month' => $params['company_sales_needed_per_month'],
-            'active_company_sales_rep' => $params['active_company_sales_rep'],
-            'average_annual_sales_per_sales_reps' => $params['average_annual_sales_per_sales_reps'],
-            'new_hire_rentention_rate' => $params['new_hire_rentention_rate'],
-            'total_sales_reps_needed' => $params['total_sales_reps_needed'],
-            'new_hire_needed' => $params['new_hire_needed'],
-            'created_at' => Carbon::now(),
-        ]);
-        //company metric target
-        $companyMetrices = self::getCompanyMetrices();
-        if( count($params['metric']) ){
-            foreach( $params['metric'] as $metric_slug => $value ){
-                $metric_data[] = [
-                    'user_company_id'       => $current_user->userCompany->id,
-                    'company_sales_plan_id' => $record->id,
-                    'metric_id'             => $companyMetrices[$metric_slug],
-                    'value'                 => $value,
-                    'created_at'            => Carbon::now()
+public static function saveCompanyPlan($params)
+{
+    // Get current user
+    $current_user = get_user();
+
+    // Delete old company sale plan data
+    self::where('company_user_id', $current_user->userCompany->id)->forceDelete();
+    CompanyMetricTarget::where('user_company_id', $current_user->userCompany->id)->forceDelete();
+    CompanyKpiTargetSale::where('user_company_id', $current_user->userCompany->id)->forceDelete();
+
+    // Save new company plan
+    $record = self::create([
+        'company_user_id' => $current_user->userCompany->id,
+        'company_annual_sales_target' => sanitizeNumber($params['company_annual_sales_target']),
+        'company_year_to_date_sold' => sanitizeNumber($params['company_year_to_date_sold']),
+        'left_to_sell' => sanitizeNumber($params['left_to_sell']),
+        'company_average_revenue_per_sale' => sanitizeNumber($params['company_average_revenue_per_sale']),
+        'work_week_left_for_the_year' => sanitizeNumber($params['work_week_left_for_the_year']),
+        'work_month_left_for_the_year' => sanitizeNumber($params['work_month_left_for_the_year']),
+        'company_sales_needed_per_week' => sanitizeNumber($params['company_sales_needed_per_week']),
+        'company_sales_needed_per_month' => sanitizeNumber($params['company_sales_needed_per_month']),
+        'active_company_sales_rep' => sanitizeNumber($params['active_company_sales_rep']),
+        'average_annual_sales_per_sales_reps' => sanitizeNumber($params['average_annual_sales_per_sales_reps']),
+        'new_hire_rentention_rate' => sanitizeNumber($params['new_hire_rentention_rate']),
+        'total_sales_reps_needed' => sanitizeNumber($params['total_sales_reps_needed']),
+        'new_hire_needed' => sanitizeNumber($params['new_hire_needed']),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+    ]);
+
+    // Company metric target
+    $companyMetrices = self::getCompanyMetrices();
+    if (!empty($params['metric'])) {
+        $metric_data = [];
+        foreach ($params['metric'] as $metric_slug => $value) {
+            $metric_data[] = [
+                'user_company_id'       => $current_user->userCompany->id,
+                'company_sales_plan_id' => $record->id,
+                'metric_id'             => $companyMetrices[$metric_slug],
+                'value'                 => sanitizeNumber($value),
+                'created_at'            => Carbon::now()
+            ];
+        }
+        CompanyMetricTarget::insert($metric_data);
+    }
+
+    // Company KPI target sale
+    if (!empty($params['kpi_target_sale'])) {
+        $kpi_target_data = [];
+        foreach ($params['kpi_target_sale'] as $kpi_target_sale_type => $values) {
+            foreach ($values as $kpi_group_id => $value) {
+                $kpi_target_data[] = [
+                    'user_company_id'      => $current_user->userCompany->id,
+                    'company_sale_plan_id' => $record->id,
+                    'kpi_target_sale_type' => $kpi_target_sale_type,
+                    'kpi_group_id'         => $kpi_group_id,
+                    'target_value'         => sanitizeNumber($value),
+                    'created_at'           => Carbon::now(),
                 ];
             }
-            CompanyMetricTarget::insert($metric_data);
         }
-
-        //company kpi target sale
-        if( !empty($params['kpi_target_sale']) )
-        {
-            foreach( $params['kpi_target_sale'] as $kpi_target_sale_type => $values )
-            {
-                foreach($values as $kpi_group_id => $value)
-                {
-                    $kpi_target_data[] = [
-                        'user_company_id'      => $current_user->userCompany->id,
-                        'company_sale_plan_id' => $record->id,
-                        'kpi_target_sale_type' => $kpi_target_sale_type,
-                        'kpi_group_id'         => $kpi_group_id,
-                        'target_value'         => $value,
-                        'created_at'           => Carbon::now(),
-                    ];
-                }
-            }
-            CompanyKpiTargetSale::insert($kpi_target_data);
-        }
-        return $record;
+        CompanyKpiTargetSale::insert($kpi_target_data);
     }
+
+    return $record;
+}
 
     public static function getCompanySalePlan()
     {

@@ -5,7 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Support\Str;
 class Team extends Model
 {
     use SoftDeletes, RestModel;
@@ -37,12 +37,13 @@ class Team extends Model
     public function hook_query_index(&$query,$request, $id = '') {
         //Your code here
         // dd($request['user']);
-        dd($request);
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        // dd($request);
+        $user = auth()->user();
+        $userRole = UserRole::getUserRoleByUserId($user->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = $user->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
             $company_id  = $userCompany->id;
         }
         $query->where('user_id',$company_id);
@@ -60,7 +61,7 @@ class Team extends Model
         $user = $postdata['user']->toArray();
         $postdata['user_company_id'] = $user['user_company']['id'];
         $postdata['user_id']         = $postdata['user']->id;
-        $postdata['slug']            = str_slug($postdata['title']);
+        $postdata['slug']            = Str::slug($postdata['title']);
         $postdata['created_at']      = Carbon::now();
         if( !empty($postdata['image_url']) ){
             $postdata['image_url'] = \Storage::url(uploadMedia('team',$postdata['image_url']));
@@ -90,7 +91,7 @@ class Team extends Model
     */
     public function hook_before_edit($request, $id, &$postData)
     {
-        $postData['slug'] = str_slug($postData['title']);
+        $postData['slug'] = Str::slug($postData['title']);
         if( !empty($postData['image_url']) ){
             $postData['image_url'] = \Storage::url(uploadMedia('team',$postData['image_url']));
         }

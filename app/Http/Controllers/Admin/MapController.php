@@ -49,7 +49,7 @@ class MapController extends Controller
     public function getCompanyUsers($company_id)
     {
         $data = [];
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params = [
             'company_user_id' => $company_id
         ];
@@ -63,7 +63,7 @@ class MapController extends Controller
     public function getCompanyStatuses()
     {
         $data = [];
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses = $this->internalCall('api/status','GET',[],$user_token);
         if( $responses->code == 200){
             $data = $responses->data;
@@ -73,7 +73,7 @@ class MapController extends Controller
 
     public function getTerritory(Request $request)
     {
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params = $request->all();
         $responses = $this->internalCall('api/territory','GET',$params,$user_token);
         if( $request->ajax() ){
@@ -92,7 +92,7 @@ class MapController extends Controller
         if( !empty($params['assignee_user_id']) ){
             $params['assignee_user_id'] = implode(',',$params['assignee_user_id']);
         }
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses  = $this->internalCall('api/user-pin','GET',$params,$user_token);
 //        if( $responses->code == 200){
 //            $data = $responses->data;
@@ -104,7 +104,7 @@ class MapController extends Controller
     {
         $params = $request->all();
         $params['assignee_user_id'] = implode(',',$params['assignee_user_id']);
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses  = $this->internalCall('api/territory','POST',$params,$user_token);
         return response()->json($responses);
     }
@@ -114,14 +114,14 @@ class MapController extends Controller
         $params = $request->all();
         $params['_method'] = 'PUT';
         $params['assignee_user_id'] = implode(',',$params['assignee_user_id']);
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses  = $this->internalCall('api/territory/' . $params['territory_id'],'POST',$params,$user_token);
         return response()->json($responses);
     }
 
     public function territoryDelete(Request $request)
     {
-        $user_token  = get_user()->token;
+        $user_token  = auth()->user()->token;
         $territory_id = $request->input('id');
         $responses   = $this->internalCall('api/territory/' . $territory_id, 'DELETE', [], $user_token);
         return response()->json($responses);

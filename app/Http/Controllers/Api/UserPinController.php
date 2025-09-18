@@ -32,14 +32,14 @@ class UserPinController extends RestController
         $validator = [];
         $custom_messages = [
             'duration.*.regex'   => 'Duration format is invalid',
-            'latitude.required'  => 'Kindly enter a valid address',
+            // 'latitude.required'  => 'Kindly enter a valid address',
         ];
         switch ($action){
             case 'POST':
                 $validator = Validator::make($this->_request->all(), [
                     'pin_status_id'     => 'required',
                     'assignee_user_id'  => 'required',
-                    'latitude'        => 'required',
+                    // 'latitude'        => 'required',
                     'duration.*'      => [
                         'nullable',
                         'regex:/^([0-9]{1,9})$/'
@@ -107,12 +107,12 @@ class UserPinController extends RestController
         $appointment_notes  = $request['appointment_notes'];
         $house_address      = $request['house_address'];
 
-        $checkUserPinAddress = UserPin::checkUserPinAddress($request['user']->id,$request['latitude'],$request['longitude']);
-        if( $checkUserPinAddress ){
-            $this->__is_error = true;
-            $error_messages['message'] = 'Pin has already dropped at this location. Kindly select another address.';
-            return $this->__sendError(__('app.validation_msg'),$error_messages,400);
-        }
+        $checkUserPinAddress = UserPin::checkUserPinAddress(auth()->user()->id,$request['latitude'],$request['longitude']);
+        // if( $checkUserPinAddress ){
+        //     $this->__is_error = true;
+        //     $error_messages['message'] = 'Pin has already dropped at this location. Kindly select another address.';
+        //     return $this->__sendError(__('app.validation_msg'),$error_messages,400);
+        // }
 
         if( !empty($appointment_title[0]) || !empty($assign_to_calender[0]) || !empty($start_datetime[0]) ||
             !empty($end_datetime[0]) || !empty($duration[0]) )
@@ -171,11 +171,11 @@ class UserPinController extends RestController
      */
     public function beforeDestroyLoadModel($request)
     {
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $userRole = UserRole::getUserRoleByUserId(auth()->user()->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = auth()->user()->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID(auth()->user()->id);
             $company_id  = $userCompany->id;
         }
         $checkRecord = UserCompanyPinMapping::where('company_user_id',$company_id)->count();

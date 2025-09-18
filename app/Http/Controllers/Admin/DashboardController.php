@@ -156,11 +156,14 @@ class DashboardController extends Controller
 
     public function getTeamPerformance(Request $request)
     {
+        // dd($request->all());
         $records = $this->userPinTeamPerformance($request->all());
         // $data['teamPerformanceData']  = $records;
         // $view    = view('admin.ajax-component.user_team_performance', $data)->render();
+
         $chart_title=array();
         $chart_value=array();
+        // dd($records);
         foreach ($records['Team A']['kpi_group_chart'] as $key => $value) {
             $chart_title[]=$value->kpi_group;
             $chart_value[]=$value->total;
@@ -171,8 +174,10 @@ class DashboardController extends Controller
     private function userPinTeamPerformance($params = [])
     {
         $data = [];
-        $getTeamPerformance = UserPin::userPinTeamPerformance(get_user()->userCompany->id,$params);
-        $getTeamMetricChart = UserPin::getTeamMetricChart(get_user()->userCompany->id,$params);
+        $user = get_user();
+        $getTeamPerformance = UserPin::userPinTeamPerformance($user->userCompany->id,$params);
+        // dd($getTeamPerformance);
+        $getTeamMetricChart = UserPin::getTeamMetricChart($user->userCompany->id,$params);
         if( count($getTeamPerformance) ){
             foreach($getTeamPerformance as $teamPerformance){
                 $data[$teamPerformance->team_name]['kpi_group_chart'][] = $teamPerformance;
@@ -181,6 +186,8 @@ class DashboardController extends Controller
                 $data[$teamPerformance->team_name]['matric_chart'][] = $teamMetricChart;
             }
         }
+        // dd($user->userCompany->id);
+        // dd($data);
         return $data;
     }
 

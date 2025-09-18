@@ -23,7 +23,7 @@ class UserTrackController extends Controller
 	public function getCompanyUsers($company_id,$user_role = '')
     {
         $data = [];
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params = [
             'company_user_id' => $company_id
         ];
@@ -40,7 +40,7 @@ class UserTrackController extends Controller
 	public function getUserTrackingData(Request $request)
 	{
 		$params = $request->all();
-		$user_token = get_user()->token;
+		$user_token = auth()->user()->token;
 		$responses = $this->internalCall('api/user-tracking','GET',$params,$user_token);
         return response()->json($responses->data);
 	}
@@ -48,7 +48,7 @@ class UserTrackController extends Controller
     public function getTrackingDates(Request $request)
     {
         $params = $request->all();
-		$user_token = get_user()->token;
+		$user_token = auth()->user()->token;
 		$responses = $this->internalCall('api/user-tracking/dates','GET',$params,$user_token);
         return response()->json($responses->data);
     }

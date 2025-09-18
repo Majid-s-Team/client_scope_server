@@ -78,11 +78,11 @@ class TerritoryController extends RestController
      */
     public function beforeUpdateLoadModel($request)
     {
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $userRole = UserRole::getUserRoleByUserId(auth()->user()->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = auth()->user()->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID(auth()->user()->id);
             $company_id  = $userCompany->id;
         }
         $checkRecord = TerritoryCompanyMapping::where('company_user_id',$company_id)->count();
@@ -97,11 +97,11 @@ class TerritoryController extends RestController
      */
     public function beforeDestroyLoadModel($request)
     {
-        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
+        $userRole = UserRole::getUserRoleByUserId(auth()->user()->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $request['user']->id;
+            $company_id = auth()->user()->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID(auth()->user()->id);
             $company_id  = $userCompany->id;
         }
         $checkRecord = TerritoryCompanyMapping::where('company_user_id',$company_id)->count();

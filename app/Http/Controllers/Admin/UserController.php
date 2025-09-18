@@ -76,7 +76,7 @@ class UserController extends Controller
         }
         $view_data['companyUsers'] = $this->getCompanyUsers($user_company_id);
         $view_data['companyTeams'] = $this->getCompanyTeam();
-        dd($view_data['companyTeams']);
+        // dd($view_data['companyTeams']);
         $view_data['kpi_groups']   = KpiGroups::getKpiGroup();
         $view_data['metrices']     = Metric::getUserMetrices($user->id,$user_company_id);
         $html = view('admin.modal.add-user',$view_data)->render();
@@ -89,7 +89,7 @@ class UserController extends Controller
     // public function getCompanyUsers($company_id)
     // {
     //     $data = [];
-    //     $user_token = get_user()->token;
+    //     $user_token = auth()->user()->token;
     //     $params = [
     //         'company_user_id' => $company_id,
     //         'user_type'       => 'administrator'
@@ -102,7 +102,7 @@ class UserController extends Controller
     // }
 public function getCompanyUsers($company_id)
 {
-    $user_token = get_user()->token;
+    $user_token = auth()->user()->token;
     $params = [
         'company_user_id' => $company_id,
         'user_type'       => 'administrator'
@@ -124,7 +124,7 @@ public function getCompanyUsers($company_id)
     public function getCompanyTeam()
     {
         $data = [];
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $responses = $this->internalCall('/api/team','GET',[],$user_token);
         if( $responses->code == 200){
             $data = $responses->data;
@@ -134,7 +134,7 @@ public function getCompanyUsers($company_id)
 
     private function _saveUser($request)
     {
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params     = $request->all();
         $params['user_role'] = 'sales-representative';
         $response   = $this->internalCall('/api/user','POST',$params,$user_token);
@@ -158,6 +158,7 @@ public function getCompanyUsers($company_id)
             $user = get_user();
             if( $user->UserRole->slug == 'company' ){
                 $user_company_id = $user->UserRole->user_id;
+                // dd($user_company_id);
             }else{
                 $user_company_id = $user->userCompany->id;
             }
@@ -180,7 +181,7 @@ public function getCompanyUsers($company_id)
 
     public function updateUser(Request $request,$id)
     {
-        $user_token = get_user()->token;
+        $user_token = auth()->user()->token;
         $params     = $request->all();
         $params['_method']   = 'PUT';
         $params['user_role'] = 'sales-representative';
@@ -246,6 +247,7 @@ public function getCompanyUsers($company_id)
 
     public function leaderBoard(Request $request)
     {
+        // dd('s');
         if( $request->ajax() ){
             return self::loadLeaderBoard($request);
         }
@@ -255,16 +257,18 @@ public function getCompanyUsers($company_id)
 
     public function getKpiGroups()
     {
-        $user_token  = get_user()->token;
+        $user_token  = auth()->user()->token;
         $apiResponse = $this->internalCall('api/kpi-group','GET',[],$user_token);
         return $apiResponse->data;
     }
 
     public function loadLeaderBoard($request)
     {
-        $user_token  = get_user()->token;
+        // $user_token  = auth()->user()->token;
+        $user_token  = auth()->user()->token;
+        // dd($user_token);
         $apiResponse = $this->internalCall('api/user/leader-board','GET',$request->all(),$user_token);
-        // dd($apiResponse->pagination);
+        // dd($apiResponse);
         if( $apiResponse->code == 200){
             $view = view('admin.ajax-component.leader-board',['data' => $apiResponse])->render();
             return $view;
@@ -281,7 +285,7 @@ public function getCompanyUsers($company_id)
 
     public function loadManageUsers($request)
     {
-        $user_token  = get_user()->token;
+        $user_token  = auth()->user()->token;
         //$apiResponse = $this->internalCall('api/user/manage-users','GET',[],$user_token);
         // $users = User::getCompanyUsers(get_user()->id,$request->keyword);
         $users = User::getCompanyUsers1(get_user()->id,$request->keyword);
@@ -294,7 +298,10 @@ public function getCompanyUsers($company_id)
     public function accountDetail(Request $request)
     {
         $current_user         = get_user()->toArray();
-        $data['user_package'] = $request['user_package']->toArray();
+        // $data['user_package'] = $request['user_package']->toArray();
+         $user_package = UserSubscription::checkUserSubscription($current_user['user_company']['company_user_id']);
+
+        $data['user_package'] = $user_package ? $user_package->toArray() : null;
         $data['total_users']  = \DB::table('user_company_mapping')->where('company_user_id',$current_user['user_company']['company_user_id'])->count();
         $data['subscriptionPackages'] = \DB::table('subscription_packages')->get();
         return view('admin.settings.account-details',$data);
@@ -321,7 +328,7 @@ public function getCompanyUsers($company_id)
         } else {
             $params = $request->all();
             $params['user_role'] = 'company';    
-            $response = $this->internalCall('/api/user','POST',$params,get_user()->token);
+            $response = $this->internalCall('/api/user','POST',$params,auth()->user()->token);
             if( $response->code != 200 ){
                 $this->_ajax_response['error']   = 1;
                 $this->_ajax_response['message'] = $response->message;

@@ -63,7 +63,7 @@ class Appointment extends Model
             if( !empty($request['user_id']) ){
                 $query->whereIn('appointment.assignee_user_id', explode(',', $request['user_id']));
             }else{
-                $query->where('appointment.assignee_user_id',$request['user']->id);
+                $query->where('appointment.assignee_user_id',auth()->user()->id);
             }
         }
         if( !empty($request['date']) ){
@@ -84,7 +84,14 @@ class Appointment extends Model
     */
     public function hook_before_add(&$postdata)
     {
-        $postdata['creator_user_id']    = $postdata['user']->id;
+
+          $user = auth()->user(); 
+
+        if (!$user) {
+            abort(403, 'User not authenticated'); 
+        }
+
+        $postdata['creator_user_id']    = $user->id;
         $postdata['title']              = $postdata['appointment_title'];
         $postdata['assignee_user_id']   = $postdata['assign_to_calender'];
         $postdata['notes']              = $postdata['appointment_notes'];
@@ -92,6 +99,7 @@ class Appointment extends Model
         $postdata['end_datetime']       = date('Y-m-d H:i:s',strtotime($postdata['end_datetime']));
         $postdata['status_id']          = get_status_id('active');
         $postdata['created_at']         = Carbon::now();
+        // dd($postdata);
     }
 
     /*
