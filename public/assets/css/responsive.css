@@ -1,0 +1,500 @@
+@media screen and (max-width: 1400px) {
+    .banner-sec h1 {
+        font-size: 40px;
+    }
+
+    .banner-sec p {
+        font-size: 18px;
+    }
+
+    .banner-sec {
+        background-size: cover;
+        padding: 80px 0;
+    }
+
+    .feature-body p {
+        font-size: 14px;
+    }
+
+    .font-38 {
+        font-size: 30px;
+    }
+
+    .choose-card h2 {
+        font-size: 20px;
+    }
+
+    .choose-card p {
+        font-size: 12px;
+    }
+
+    .choose-card {
+        padding: 20px 10px;
+        margin-top: 10px;
+    }
+
+    .font-48 {
+        font-size: 40px;
+    }
+
+    .work-card .work-body h2 {
+        font-size: 21px;
+    }
+
+    .work-img {
+        width: 80px;
+        margin: 0 auto;
+        height: 180px;
+    }
+
+    .work-img img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .work-card .work-body h2 {
+        margin-top: -55px;
+    }
+
+    .feature-card .feature-body br {
+        display: none;
+    }
+
+    .feature-img {
+        width: 200px;
+        height: 155px;
+    }
+
+    .feature-card h2 {
+        font-size: 24px;
+    }
+
+    .chooseus-sec {
+        padding: 70px 0 20px 0;
+    }
+
+    .footer-sidebar img {
+        width: 510px;
+    }
+
+    .container {
+        padding: 0 50px;
+    }
+
+    .auth-logo img {
+        width: 300px;
+    }
+
+    .auth-box {
+        padding: 100px 60px 60px 60px;
+        position: relative;
+    }
+
+    .sign-up-box {
+        padding: 50px 60px 60px 60px;
+    }
+
+
+    .signup-sidebar {
+        height: 100%;
+    }
+
+    #sidebar {
+        width: 200px;
+        left: -150px;
+    }
+
+    .toggled #sidebar ul li a {
+        font-size: 14px;
+    }
+
+    .toggled #sidebar ul li img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .toggled #sidebar ul li .user-profile {
+        width: 40px;
+        height: 40px;
+    }
+
+    .toggled #sidebar ul li .user-profile img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .side-logo img {
+        width: 140px;
+    }
+
+    .mt-5 {
+        margin-top: 20px !important;
+    }
+
+    .nav>li {
+        margin-bottom: 18px;
+    }
+
+
+    #wrapper.toggled .flex-grow-1 {
+        margin-left: 200px;
+    }
+
+    .dashboard header {
+        padding: 12px 0;
+    }
+
+    #sidebar ul li img {
+        margin-left: 144px;
+    }
+
+    .toggled #sidebar ul li .user-profile img {
+        margin-left: 0;
+    }
+
+    #sidebar ul li .user-profile img {
+        margin-left: 137px;
+    }
+}
+
+@media screen and (max-width: 1199px) {
+    .banner-sec h1 {
+        font-size: 30px;
+    }
+
+    .banner-sec p {
+        font-size: 14px;
+    }
+
+    .banner-sec {
+        padding: 40px 0 10px 0;
+    }
+
+    .font-38 {
+        font-size: 26px;
+    }
+
+    .mb-5 {
+        margin-bottom: 10px !important;
+    }
+
+    .feature-card h2 {
+        font-size: 20px;
+    }
+
+    .feature-body p {
+        font-size: 12px;
+        margin-top: 6px !important;
+    }
+
+    .feature-sec {
+        padding-bottom: 50px;
+    }
+
+    .work-card .work-body p {
+        font-size: 11px;
+    }
+
+    .font-48 {
+        font-size: 34px;
+    }
+
+    .work-img {
+        width: 50px;
+        height: 123px;
+    }
+
+    .work-card .work-body h2 {
+        margin-top: -41px;
+        font-size: 18px;
+    }
+
+    .work-card .work-body p {
+        margin-top: 10px !important;
+    }
+
+    .font-38 {
+        font-size: 22px;
+    }
+
+    .choose-card h2 {
+        font-size: 18px;
+    }
+
+    .choose-card {
+        margin-top: 0 !important;
+    }
+
+    .footer-sidebar img {
+        width: 360px;
+    }
+
+    .google-img img {
+        width: 120px;
+    }
+
+    .appstore-img img {
+        width: 120px;
+    }
+
+    .mt-4 {
+        margin-top: 15px !important;
+    }
+
+    .mt-2 {
+        margin-top: 3px !important;
+    }
+
+    .logo img {
+        width: 180px;
+    }
+
+    .auth-box {
+        padding: 100px 40px 40px 40px;
+        position: relative;
+    }
+
+    .sign-up-box {
+        padding: 50px 40px 40px 40px;
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .footer-sidebar img {
+        width: 270px;
+    }
+
+    .container {
+        padding: 0 15px;
+    }
+
+    .work-card {
+        padding: 0;
+    }
+
+    .banner-sec h1 {
+        font-size: 26px;
+    }
+
+    .banner-sec p {
+        font-size: 12px;
+        margin-top: 7px !important;
+    }
+
+    .feature-card {
+        margin-top: 20px;
+    }
+
+    .feature-card h2 {
+        font-size: 18px;
+    }
+
+    .feature-img {
+        width: 150px;
+        height: 100px;
+    }
+
+    .work-card .work-body h2 {
+        margin: 0;
+    }
+
+    .work-img {
+        height: 100px;
+    }
+
+    .work-card .work-body p {
+        margin-top: 0 !important;
+    }
+
+    .font-48 {
+        font-size: 26px;
+    }
+
+    .font-38 {
+        font-size: 20px;
+    }
+
+    .choose-card h2 {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    .choose-card p {
+        margin: 3px 0 0 0 !important;
+    }
+
+    .choose-card {
+        padding: 14px 10px;
+        border-radius: 12px;
+    }
+
+    footer p {
+        font-size: 12px;
+    }
+
+    .google-img img {
+        width: 100px;
+    }
+
+    .appstore-img img {
+        width: 100px;
+    }
+
+    .logo img {
+        width: 150px;
+    }
+
+    .btn-theme {
+        padding: 0 20px;
+        font-size: 12px;
+        height: 32px;
+    }
+
+    header p {
+        font-size: 12px;
+    }
+
+    .auth-box {
+        padding: 100px 20px 20px 20px;
+        position: relative;
+    }
+
+    .sign-up-box {
+        padding: 50px 20px 20px 20px;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .chooseus-sec img {
+        display: none;
+    }
+
+    .footer-sidebar {
+        display: none;
+    }
+
+    .banner-sec h1 {
+        font-size: 20px;
+    }
+
+    .banner-sec p {
+        font-size: 10px;
+    }
+
+    .font-38 {
+        font-size: 16px;
+    }
+
+    .banner-sec img {
+        width: 360px;
+    }
+
+    .logo img {
+        width: 120px;
+    }
+
+    header p {
+        font-size: 10px;
+    }
+
+    .feature-card h2 {
+        font-size: 16px;
+    }
+
+    .feature-body p {
+        font-size: 10px;
+    }
+
+    .feature-img {
+        width: 100px;
+        height: 70px;
+    }
+
+    .feature-sec {
+        padding-bottom: 20px;
+    }
+
+    .font-48 {
+        font-size: 20px;
+    }
+
+    .work-sec {
+        padding: 20px 0;
+    }
+
+    .work-card .work-body h2 {
+        font-size: 16px;
+    }
+
+    .work-card .work-body p {
+        font-size: 10px;
+    }
+
+    .work-img {
+        height: 70px;
+        width: 40px;
+    }
+
+    .chooseus-sec {
+        padding: 30px 0;
+    }
+
+    .google-img {
+        margin-bottom: 20px;
+    }
+
+    .appstore-img {
+        margin-bottom: 20px;
+    }
+
+    .choose-card h2 {
+        font-size: 14px;
+    }
+
+    .choose-card {
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .auth-sidebar {
+        display: none;
+    }
+
+    .auth-logo {
+        padding-left: 0;
+    }
+
+    div#wrapper main {
+        margin-left: 46px;
+    }
+}
+
+@media screen and (max-width: 575px) {
+    .btn-theme {
+        padding: 0 10px;
+        font-size: 10px;
+        height: 25px;
+        border-radius: 4px;
+    }
+
+    .banner-sec h1 {
+        font-size: 16px;
+    }
+
+    .banner-sec {
+        padding: 10px 0;
+    }
+
+    footer p {
+        font-size: 10px;
+    }
+
+    .mt-4 {
+        margin-top: 9px !important;
+    }
+
+    .choose-card p {
+        font-size: 10px;
+    }
+
+}
