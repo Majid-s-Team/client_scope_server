@@ -70,7 +70,7 @@ Route::middleware(['ApiAuthorization'])->group(function () {
         Route::delete('notification/{id}', [NotificationController::class, 'deleteNotification']);
         Route::get('notification', [NotificationController::class, 'index'])->name('notification.list');
         Route::post('notification/setting', [NotificationController::class, 'notificationSetting'])->name('notification.setting');
-        Route::get('notification/setting', [NotificationController::class, 'getNotificationSetting'])->name('notification.setting');
+        Route::get('notification/setting', [NotificationController::class, 'getNotificationSetting'])->name('notification.settings');
 
         // Data truncate
         Route::post('truncate-all-data', [GeneralController::class, 'truncateAllData']);

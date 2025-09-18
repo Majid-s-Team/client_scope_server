@@ -67,7 +67,7 @@ class UserController extends Controller
     {
         if( $request->isMethod('post') )
             return self::_saveUser($request);
-
+        
         $user = get_user();
         if( $user->UserRole->slug == 'company' ){
             $user_company_id = $user->UserRole->user_id;
@@ -76,6 +76,7 @@ class UserController extends Controller
         }
         $view_data['companyUsers'] = $this->getCompanyUsers($user_company_id);
         $view_data['companyTeams'] = $this->getCompanyTeam();
+        dd($view_data['companyTeams']);
         $view_data['kpi_groups']   = KpiGroups::getKpiGroup();
         $view_data['metrices']     = Metric::getUserMetrices($user->id,$user_company_id);
         $html = view('admin.modal.add-user',$view_data)->render();
@@ -85,20 +86,40 @@ class UserController extends Controller
         return response()->json($data);
     }
 
-    public function getCompanyUsers($company_id)
-    {
-        $data = [];
-        $user_token = get_user()->token;
-        $params = [
-            'company_user_id' => $company_id,
-            'user_type'       => 'administrator'
-        ];
-        $responses = $this->internalCall('/api/user','GET',$params,$user_token);
-        if( $responses->code == 200){
-            $data = $responses->data;
-        }
-        return $data;
+    // public function getCompanyUsers($company_id)
+    // {
+    //     $data = [];
+    //     $user_token = get_user()->token;
+    //     $params = [
+    //         'company_user_id' => $company_id,
+    //         'user_type'       => 'administrator'
+    //     ];
+    //     $responses = $this->internalCall('/api/user','GET',$params,$user_token);
+    //     if( $responses->code == 200){
+    //         $data = $responses->data;
+    //     }
+    //     return $data;
+    // }
+public function getCompanyUsers($company_id)
+{
+    $user_token = get_user()->token;
+    $params = [
+        'company_user_id' => $company_id,
+        'user_type'       => 'administrator'
+    ];
+    
+    $responses = $this->internalCall('/api/user','GET',$params,$user_token);
+    // dd($responses);
+
+    if ($responses->code == 200 && !empty($responses->data)) {
+        // Normalize to a collection of objects
+        return collect($responses->data)->map(function ($item) {
+            return (object) $item; // force each record to object
+        });
     }
+
+    return collect();
+}
 
     public function getCompanyTeam()
     {

@@ -49,6 +49,7 @@ class DashboardController extends Controller
     public function getSRKpiTargets(Request $request)
     {
         if ($request->bar_type=='Anual') {
+            // dd($request);
         $data  = UserKpiTargetSale::getUserAnnualKpiTarget(get_user()->id);
         }
         if ($request->bar_type=='Monthly') {

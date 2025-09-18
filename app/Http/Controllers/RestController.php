@@ -31,12 +31,14 @@ class RestController extends Controller
             }
         }
         //before load modal hook
+
         if(method_exists($this,'beforeIndexLoadModel')){
             $response = $this->beforeIndexLoadModel($request);
             if(  $this->__is_error ){
                 return $response;
             }
         }
+        // dd($request);
         $record = $this->loadModel()->getRecords($request);
         $message = isset($this->success_listing_message) ? __('app.'.$this->success_listing_message) : __('app.success_listing_message');
         return $this->__sendResponse($record,200,$message);

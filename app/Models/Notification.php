@@ -53,39 +53,29 @@ class Notification extends Model
      * @param $params
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    // public static function getNotifications($params)
-    // {
-    //     $limit = !empty($params['limit']) ? $params['limit'] : config('constants.PAGINATION_LIMIT');
-    //     $query = self::with('actor','target')
-    //                     ->select('notification.*')
-    //                     ->join('users AS actor','actor.id','=','notification.actor_id')
-    //                     ->join('users AS target','target.id','=','notification.target_id')
-    //                     ->where('notification.target_id',$params['user']->id)
-    //                     //->whereRaw("notification.id NOT IN (SELECT id FROM notification WHERE reference_module='chat' AND is_read = 1  )")
-    //                     ->orderBy('notification.id','desc')
-    //                     ->paginate($limit);
-    //     //update notification
-    //     Notification::where('notification.target_id',$params['user']->id)->update([
-    //         'is_read'   => 1
-    //     ]);
-
-    //     return $query;
-    // }
-    public static function getNotifications($params)
+public static function getNotifications($params)
 {
-    $limit = !empty($params['limit']) ? $params['limit'] : config('constants.PAGINATION_LIMIT');
-    $user  = $params['user'] ?? auth()->user(); // 👈 fallback
+    // Ensure $user is always resolved
+    $user = $params['user'] ?? auth()->user();
 
-    $query = self::with('actor','target')
-                ->select('notification.*')
-                ->join('users AS actor','actor.id','=','notification.actor_id')
-                ->join('users AS target','target.id','=','notification.target_id')
-                ->where('notification.target_id', $user->id)
-                ->orderBy('notification.id','desc')
-                ->paginate($limit);
+    if (!$user) {
+        throw new \Exception("User not found. Please pass 'user' in params or ensure authentication.");
+    }
 
-    // update notifications
-    Notification::where('notification.target_id', $user->id)->update([
+    $limit = !empty($params['limit']) 
+        ? $params['limit'] 
+        : config('constants.PAGINATION_LIMIT');
+
+    $query = self::with('actor', 'target')
+        ->select('notification.*')
+        ->join('users AS actor', 'actor.id', '=', 'notification.actor_id')
+        ->join('users AS target', 'target.id', '=', 'notification.target_id')
+        ->where('notification.target_id', $user->id)
+        ->orderBy('notification.id', 'desc')
+        ->paginate($limit);
+
+    // Mark notifications as read
+    self::where('notification.target_id', $user->id)->update([
         'is_read' => 1
     ]);
 

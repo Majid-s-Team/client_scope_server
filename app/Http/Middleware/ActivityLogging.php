@@ -29,7 +29,7 @@ public function handle($request, Closure $next, ...$guards)
             'user_id'      => Auth::guard($guards[0] ?? 'web')->check()
                                 ? Auth::guard($guards[0] ?? 'web')->id()
                                 : 0,
-            'user_type'    => $guards[0] ?? 'web',
+            'user_type' => (string) ($guards[0] ?? 'web'),
             'action'       => optional($request->route())->getName(),
             'user_request' => json_encode($data),
             'user_agent'   => $request->header('User-Agent'),

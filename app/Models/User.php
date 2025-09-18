@@ -113,40 +113,48 @@ class User extends Authenticatable
    | @request = laravel http request class
    |
    */
-    public function hook_query_index(&$query,$request,$id = '') {
-        //Your code here
-        $params = $request->all();
-        $default_image_url = URL::to('images/user-placeholder.png');
-        
-        $query->with(['userMeta','parentUser','userTeam','UserRole','userCompany','reportToUser'])
-              //->with(['userTeam','userRole','userCompany','reportToUser','userSalesPlan','userMetric'])
-              ->select('users.*')
-              ->selectRaw("IFNULL(users.image_url,'$default_image_url') AS image_url, s.title AS status")
-              ->join('status AS s','s.id','=','users.status_id')
-              ->join('user_role AS ur','ur.user_id','=','users.id')
-              ->join('roles AS r','r.id','=','ur.role_id');
+   public function hook_query_index(&$query,$request,$id = '') {
+    $params = $request->all();
+    $default_image_url = URL::to('images/user-placeholder.png');
 
-        if( !empty($params['user_type']) ){
-            $query->join('user_meta AS um',function($join){
-                $join->on('um.user_id','=','users.id')
-                     ->where('um.meta_key','=','is_administrator');
-            })
-            ->where('um.meta_value','1');
-        }
-        if( $id == '' ){
-            $query->join('user_company_mapping AS ucm','ucm.employee_user_id','=','users.id');
-            $query->where('ucm.company_user_id',$request['company_user_id']);
-//            $query->where('users.id','!=',$request['user']->id);
-        }
-        if( !empty($params['user-role']) )
-        {
-            $query->whereIn('r.slug',explode(',',$params['user-role']));
-        }
-        if( !empty($params['except_user_id']) ){
-            $query->whereNotIn('users.id',explode(',',$params['except_user_id']));
-        }
-        $query->groupBy('users.id');
+    $query->with(['userMeta','parentUser','userTeam','UserRole','userCompany','reportToUser'])
+          ->select(
+              'users.id',
+              'users.parent_id',
+              'users.first_name',
+              'users.last_name',
+              'users.name',
+              'users.username',
+              'users.email',
+              'users.mobile_no',
+              'users.status_id',
+              'users.created_at'
+          )
+          ->selectRaw("IFNULL(users.image_url,'$default_image_url') AS image_url, s.title AS status")
+          ->join('status AS s','s.id','=','users.status_id')
+          ->join('user_role AS ur','ur.user_id','=','users.id')
+          ->join('roles AS r','r.id','=','ur.role_id');
+
+    if( !empty($params['user_type']) ){
+        $query->join('user_meta AS um',function($join){
+            $join->on('um.user_id','=','users.id')
+                 ->where('um.meta_key','=','is_administrator');
+        })
+        ->where('um.meta_value','1');
     }
+    if( $id == '' ){
+        $query->join('user_company_mapping AS ucm','ucm.employee_user_id','=','users.id');
+        $query->where('ucm.company_user_id',$request['company_user_id']);
+    }
+    if( !empty($params['user-role']) )
+    {
+        $query->whereIn('r.slug',explode(',',$params['user-role']));
+    }
+    if( !empty($params['except_user_id']) ){
+        $query->whereNotIn('users.id',explode(',',$params['except_user_id']));
+    }
+    $query->groupBy('users.id');
+}
 
     /*
     | ----------------------------------------------------------------------
@@ -441,21 +449,35 @@ class User extends Authenticatable
      * @param {int} $user_id
      * @return {object} $user
      */
-    public static function getUserByID($user_id)
-    {
-        $default_image_url = URL::to('images/user-placeholder.png');
-        $query = self::with(['userMeta','parentUser','userTeam','UserRole','userCompany','reportToUser'])
-                    ->select('users.*')
-                    ->selectRaw("IFNULL(image_url,'$default_image_url') AS image_url")
-                    ->where('id',$user_id)
-                    ->first();
-        if( isset($query->id) ){
-            $userMeta = self::userMetaKeyMapping($query->userMeta);
-            unset($query->userMeta);
-            $query->user_meta = $userMeta;
-        }
-        return $query;
+public static function getUserByID($user_id)
+{
+    $default_image_url = URL::to('images/user-placeholder.png');
+
+    $query = self::with(['userMeta','parentUser','userTeam','UserRole','userCompany','reportToUser'])
+                ->select(
+                    'users.id',
+                    'users.parent_id',
+                    'users.first_name',
+                    'users.last_name',
+                    'users.name',
+                    'users.username',
+                    'users.email',
+                    'users.mobile_no',
+                    'users.status_id',
+                    'users.created_at'
+                )
+                ->selectRaw("IFNULL(users.image_url,'$default_image_url') AS image_url")
+                ->where('users.id',$user_id)
+                ->first();
+
+    if( isset($query->id) ){
+        $userMeta = self::userMetaKeyMapping($query->userMeta);
+        unset($query->userMeta);
+        $query->user_meta = $userMeta;
     }
+    return $query;
+}
+
 
     public static function userMetaKeyMapping($userMeta)
     {
@@ -510,43 +532,8 @@ class User extends Authenticatable
                       ->selectRaw("s.title AS status,IFNULL(users.image_url,'$default_image_url') AS image_url")
                       ->join('user_company_mapping AS ucm','ucm.employee_user_id','=','users.id')
                       ->join('status AS s','s.id','=','users.status_id')
-                      ->where('ucm.company_user_id',$company_id) ->get()
-                    //   if(!empty($search)){
-                    //    $query= $query->where(function ($q) use($search){
-                    //         $q->where('users.first_name',"like","%$search%")
-                    //         ->orWhere('users.last_name',"like","%$search%");
-                    //   });
-                    //   }
-                     
-                    //  $query= $query->paginate(2);
-                     ;
-        return $query;
-    }
-
-    public static function getCompanyUsers1($user_id,$search)
-    {
-        $userRole = UserRole::getUserRoleByUserId($user_id);
-        if( $userRole->slug == 'company' ){
-            $company_id = $user_id;
-        }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user_id);
-            $company_id  = $userCompany->id;
-        }
-        $default_image_url = URL::to('images/user-placeholder.png');
-        $query = self::select('users.*')
-                      ->selectRaw("s.title AS status,IFNULL(users.image_url,'$default_image_url') AS image_url")
-                      ->join('user_company_mapping AS ucm','ucm.employee_user_id','=','users.id')
-                      ->join('status AS s','s.id','=','users.status_id')
-                      ->where('ucm.company_user_id',$company_id);
-                      if(!empty($search)){
-                       $query= $query->where(function ($q) use($search){
-                            $q->where('users.first_name',"like","%$search%")
-                            ->orWhere('users.last_name',"like","%$search%");
-                      });
-                      }
-                     
-                     $query= $query->paginate(2);
-                    //   ->get();
+                      ->where('ucm.company_user_id',$company_id)
+                      ->get();
         return $query;
     }
 
@@ -569,9 +556,8 @@ class User extends Authenticatable
 
         $company_id = $user['user_company']['id'];
         $query = UserCompanyMapping::join('users AS u','u.id','=','user_company_mapping.employee_user_id')
-                                    ->selectRaw("team.title as team_title,u.id, u.name, u.email, u.mobile_no, u.image_url, COUNT(ups.id) as total_sale")
+                                    ->selectRaw("u.id, u.name, u.email, u.mobile_no, u.image_url, COUNT(ups.id) as total_sale")
                                     ->join('user_pin_update_history AS updu','updu.user_id','=','u.id')
-                                    ->leftjoin('team','team.user_id','=','u.id')
                                     ->join('user_pin_status AS ups','ups.id','=','updu.user_pin_status_id')
                                     ->join('user_pin_status_kpi_group AS upskg','upskg.user_pin_status_id','=','ups.id')
                                     ->where('user_company_mapping.company_user_id',$company_id);
@@ -729,41 +715,37 @@ class User extends Authenticatable
         return $data;
     }
 
-    public static function getUserMetric($user_id, $territory_id = 0)
-    {
-        $user = get_user()->toArray();
-        $company_id = $user['user_company']['id'];
-        if( $user['user_role']['slug'] == 'sales-representative' || $user['user_role']['slug'] == 'team-lead' ){
-            $query = \DB::table('user_metric_target AS umt')
-                        ->select('umt.value','m.title','ups.custom_metric_title AS custom_metric_title')
-                        ->join('metrices AS m','m.id','=','umt.metric_id')
-                        ->leftJoin('user_pin_status AS ups', function($leftJoin) use ($company_id){
-                            $leftJoin->on('ups.metric_id','=','m.id')
-                                     ->where('ups.company_user_id','=',$company_id);    
-                        })
-                        // ->leftJoin('user_pin_update_history AS upuh', function($leftJoin) use ($company_id){
-                        //     $leftJoin->on('upuh.user_pin_status_id','=','ups.id');        
-                        // })
-                        // ->leftJoin('user_pin AS up', function($leftJoin) use ($territory_id){
-                        //     $leftJoin->on('up.id','=','upuh.user_pin_id')
-                        //              ->where('up.territory_id','=',$territory_id);        
-                        // })
-                        ->where('umt.user_id',$user_id)
-                        ->groupBy('m.id')    
-                        ->get();
-        } else {
-            $query = \DB::table('company_metric_target AS cmt')
-                        ->select('cmt.value','m.title')
-                        ->join('metrices AS m','m.id','=','cmt.metric_id')
-                        ->leftJoin('user_pin_status AS ups', function($leftJoin) use ($company_id){
-                            $leftJoin->on('ups.metric_id','=','m.id')
-                                     ->where('ups.company_user_id','=',$company_id);    
-                        })
-                        ->where('cmt.user_company_id',$user['user_company']['id'])
-                        ->get();
-        }
-        return $query;
+public static function getUserMetric($user_id, $territory_id = 0)
+{
+    $user = get_user()->toArray();
+    $company_id = $user['user_company']['id'];
+
+    if ($user['user_role']['slug'] == 'sales-representative' || $user['user_role']['slug'] == 'team-lead') {
+        $query = \DB::table('user_metric_target AS umt')
+            ->selectRaw('ANY_VALUE(umt.value) as value, m.title, ANY_VALUE(ups.custom_metric_title) as custom_metric_title')
+            ->join('metrices AS m', 'm.id', '=', 'umt.metric_id')
+            ->leftJoin('user_pin_status AS ups', function ($leftJoin) use ($company_id) {
+                $leftJoin->on('ups.metric_id', '=', 'm.id')
+                         ->where('ups.company_user_id', '=', $company_id);
+            })
+            ->where('umt.user_id', $user_id)
+            ->groupBy('m.id', 'm.title')
+            ->get();
+    } else {
+        $query = \DB::table('company_metric_target AS cmt')
+            ->select('cmt.value', 'm.title')
+            ->join('metrices AS m', 'm.id', '=', 'cmt.metric_id')
+            ->leftJoin('user_pin_status AS ups', function ($leftJoin) use ($company_id) {
+                $leftJoin->on('ups.metric_id', '=', 'm.id')
+                         ->where('ups.company_user_id', '=', $company_id);
+            })
+            ->where('cmt.user_company_id', $user['user_company']['id'])
+            ->get();
     }
+
+    return $query;
+}
+
 
     public static function generateApiToken($email,$ip_address,$device_type,$device_token,$datetime)
     {

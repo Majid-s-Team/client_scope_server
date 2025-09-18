@@ -36,6 +36,8 @@ class Team extends Model
    */
     public function hook_query_index(&$query,$request, $id = '') {
         //Your code here
+        // dd($request['user']);
+        dd($request);
         $userRole = UserRole::getUserRoleByUserId($request['user']->id);
         if( $userRole->slug == 'company' ){
             $company_id = $request['user']->id;

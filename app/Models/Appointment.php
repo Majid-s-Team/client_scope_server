@@ -56,7 +56,6 @@ class Appointment extends Model
     public function hook_query_index(&$query,$request, $id = '')
     {
         //Your code here
-        $user = auth()->user();
         $query->with('userPin','assigneeUser','creatorUser');
         $query->select('appointment.*');
 		$query->join('user_pin AS up','up.id','=','appointment.user_pin_id');
@@ -64,7 +63,7 @@ class Appointment extends Model
             if( !empty($request['user_id']) ){
                 $query->whereIn('appointment.assignee_user_id', explode(',', $request['user_id']));
             }else{
-                $query->where('appointment.assignee_user_id',$user->id);
+                $query->where('appointment.assignee_user_id',$request['user']->id);
             }
         }
         if( !empty($request['date']) ){

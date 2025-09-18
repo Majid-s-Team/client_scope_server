@@ -125,47 +125,39 @@ class Metric extends Model
                                 ->where('ups.company_user_id','=',$user_company_id);
                         })
                         ->where('metrices.status',1)
-                        // ->groupBy('metrices.id')
-                        ->groupBy(
-    'metrices.id',
-    'metrices.title',
-    'metrices.slug',
-    'metrices.description',
-    'metrices.status',
-    'metrices.sort_order',
-    'metrices.created_at',
-    'metrices.updated_at',
-    'metrices.deleted_at',
-    'cmt.value',
-    'ups.custom_metric_title'
-)
-
+                        ->groupBy('metrices.id')
                         ->orderBy('metrices.sort_order','asc')
                         ->get();
         return $query;
     }
 
-    public static function getUserMetrices($user_id = 0,$user_company_id = 0)
-    {
-        $query = self::select('metrices.*')
-            ->selectRaw('IFNULL(umt.value,0) AS value, IFNULL(cmt.value,0) AS company_metric_value,
-            ups.custom_metric_title')
-            ->leftJoin('user_metric_target AS umt',function($leftJoin) use ($user_id){
-                $leftJoin->on('umt.metric_id','=','metrices.id')
-                    ->where('umt.user_id','=',$user_id);
-            })
-            ->leftJoin('company_metric_target AS cmt',function($leftJoin) use ($user_company_id){
-                $leftJoin->on('cmt.metric_id','=','metrices.id')
-                         ->where('cmt.user_company_id','=',$user_company_id);
-            })
-            ->leftJoin('user_pin_status AS ups',function($leftJoin) use ($user_company_id){
-                $leftJoin->on('ups.metric_id','=','metrices.id')
-                    ->where('ups.company_user_id','=',$user_company_id);
-            })
-            ->where('metrices.status',1)
-            ->groupBy('metrices.id')
-            ->orderBy('metrices.sort_order','asc')
-            ->get();
-        return $query;
-    }
+    public static function getUserMetrices($user_id = 0, $user_company_id = 0)
+{
+    $query = self::select('metrices.*')
+        ->selectRaw("
+            IFNULL(MAX(umt.value),0) AS value,
+            IFNULL(MAX(cmt.value),0) AS company_metric_value,
+            MAX(ups.custom_metric_title) AS custom_metric_title
+        ")
+        ->leftJoin('user_metric_target AS umt', function($leftJoin) use ($user_id) {
+            $leftJoin->on('umt.metric_id', '=', 'metrices.id')
+                     ->where('umt.user_id', '=', $user_id);
+        })
+        ->leftJoin('company_metric_target AS cmt', function($leftJoin) use ($user_company_id) {
+            $leftJoin->on('cmt.metric_id', '=', 'metrices.id')
+                     ->where('cmt.user_company_id', '=', $user_company_id);
+        })
+        ->leftJoin('user_pin_status AS ups', function($leftJoin) use ($user_company_id) {
+            $leftJoin->on('ups.metric_id', '=', 'metrices.id')
+                     ->where('ups.company_user_id', '=', $user_company_id);
+        })
+        ->where('metrices.status', 1)
+        ->whereNull('metrices.deleted_at')
+        ->groupBy('metrices.id')
+        ->orderBy('metrices.sort_order', 'asc')
+        ->get();
+
+    return $query;
+}
+
 }

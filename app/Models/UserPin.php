@@ -76,27 +76,19 @@ class UserPin extends Model
  |
  */
     public function hook_query_index(&$query,$request, $id = '') {
-        $user = auth()->user();
-          
+        //Your code here
         $params   = $request->all();
-        $userRole = UserRole::getUserRoleByUserId($user->id);
+        $userRole = UserRole::getUserRoleByUserId($request['user']->id);
         if( $userRole->slug == 'company' ){
-            $company_id = $user->id;
+            $company_id = $request['user']->id;
         }else{
-            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($user->id);
+            $userCompany = UserCompanyMapping::getCompanyByEmployeeID($request['user']->id);
             $company_id  = $userCompany->id;
         }
         $query->with(['pinStatus','pinStatusHistory','creatorUser','assigneeUser','appointment.assigneeUser','territory'])
                 ->select('user_pin.*')
-->selectRaw("creator.name AS creator_name, 
-             assignee.name AS assignee_name, 
-             ups.title AS status_title, 
-             updated_user.name AS updated_by_name,
-             t.title AS territory_title, 
-             a.title AS appointment_title, 
-             a.notes AS appointment_notes, 
-             COUNT(upuh.id) AS num_of_status_changes, 
-             MAX(DATE(upuh.created_at)) AS status_modified_date")
+                ->selectRaw("creator.name AS creator_name, assignee.name AS assignee_name, ups.title AS status_title, 
+                updated_user.name AS updated_by,t.title AS territory_title, a.title AS appointment_title, a.notes AS appointment_notes, count('upuh.id') AS num_of_status_changes, DATE(upuh.created_at) AS status_modified_date")
                 ->join('user_company_pin_mapping AS ucpm','ucpm.user_pin_id','=','user_pin.id')
                 ->join('users AS creator','creator.id','=','user_pin.creator_user_id')
                 ->join('users AS assignee','assignee.id','=','user_pin.assignee_user_id')
@@ -107,17 +99,8 @@ class UserPin extends Model
                 ->leftJoin('user_pin_update_history AS upuh','upuh.user_pin_id','=','user_pin.id')
                 ->where('user_pin.status_id',get_status_id('active'))
                 ->where('ucpm.company_user_id',$company_id)
-                // ->groupBy('user_pin.id');
-                ->groupBy([
-                    'user_pin.id',
-                    'creator.name',
-                    'assignee.name',
-                    'ups.title',
-                    'updated_user.name',
-                    't.title',
-                    'a.title',
-                    'a.notes'
-                ]);
+                ->groupBy('user_pin.id');
+
 //        if( $params['user']->userRole->slug != 'company' && $params['user']->user_meta['is_administrator'] != 1 )
 //        {
 //            // get own pin
@@ -333,13 +316,12 @@ class UserPin extends Model
     */
     public function hook_before_edit($request, $id, &$postData)
     {
-        $user = $request->user();
         $latitude               = round($postData['latitude'],7);
         $longitude              = round($postData['longitude'],7);
         $postData['latitude']   = $latitude;
         $postData['longitude']  = $longitude;
         $postData['updated_at'] = Carbon::now();
-        $postData['updated_by'] = $user->id;
+        $postData['updated_by'] = $request['user']->id;
     }
 
     /*
@@ -446,25 +428,31 @@ class UserPin extends Model
         return $query;
     }
 
-    public static function getUserPinCountByDayName($user_id,$company_user_id)
-    {
-        $user = get_user()->toArray();
-        $query = \DB::table('user_pin AS up')
-                    ->selectRaw('DAYNAME(up.created_at) AS day_name, COUNT(up.id) AS total')
-                    ->join('user_company_pin_mapping AS ucpm','ucpm.user_pin_id','=','up.id')
-                    ->join('user_pin_update_history AS upuh','upuh.user_pin_id','=','up.id')
-                    ->join('user_pin_status AS ups','ups.id','=','upuh.user_pin_status_id')
-                    ->join('user_pin_status_kpi_group AS upskg','upskg.user_pin_status_id','=','ups.id');
-        if( $user['user_role']['slug'] == 'sales-representative' ){
-            $query->where('upuh.user_id',$user_id);
-        }
-        $query = $query->where('ucpm.company_user_id',$company_user_id)
-                        ->where('upskg.kpi_group_id',4) //contact id
-                        ->groupBy(\DB::raw('DAYNAME(up.created_at)'))
-                        ->orderBy(\DB::raw('DAYOFWEEK(up.created_at)'))
-                        ->get();
-        return $query;
+   public static function getUserPinCountByDayName($user_id, $company_user_id)
+{
+    $user = get_user()->toArray();
+
+    $query = \DB::table('user_pin AS up')
+        ->selectRaw('DAYNAME(up.created_at) AS day_name, 
+                     COUNT(up.id) AS total,
+                     MIN(DAYOFWEEK(up.created_at)) as sort_order')
+        ->join('user_company_pin_mapping AS ucpm','ucpm.user_pin_id','=','up.id')
+        ->join('user_pin_update_history AS upuh','upuh.user_pin_id','=','up.id')
+        ->join('user_pin_status AS ups','ups.id','=','upuh.user_pin_status_id')
+        ->join('user_pin_status_kpi_group AS upskg','upskg.user_pin_status_id','=','ups.id');
+
+    if ($user['user_role']['slug'] == 'sales-representative') {
+        $query->where('upuh.user_id', $user_id);
     }
+
+    $query = $query->where('ucpm.company_user_id', $company_user_id)
+        ->where('upskg.kpi_group_id', 4) // contact id
+        ->groupBy(\DB::raw('DAYNAME(up.created_at)'))
+        ->orderBy('sort_order')
+        ->get();
+
+    return $query;
+}
 
     public static function getTerritoryByLatLong($user_company_id,$lat,$long)
     {
@@ -523,102 +511,103 @@ class UserPin extends Model
         return $query;
     }
 
-    public static function userPinTeamPerformance($company_user_id,$params = [])
-    {
-        $user = get_user()->toArray();
-        $query = \DB::table('user_pin AS up')
-                    ->selectRaw('
-                        kg.`title` AS kpi_group,
-                        ups.`image_url`, 
-                        t.`title` AS team_name,
-                        COUNT(upuh.`user_pin_id`) AS total,
-                        ROUND( ( COUNT(upuh.id) * 100 ) / ckts.target_value ) AS kpi_percent,
-                        (
-                            SELECT 
-                                SUM(tt.universe) 
-                            FROM 
-                                territory tt
-                                    INNER JOIN territory_company_maping tcm
-                                        ON tcm.territory_id = tt.id     
-                                    WHERE 
-                                        tcm.employee_user_id IN (GROUP_CONCAT(DISTINCT u.id))
-                                    GROUP BY t.id    
-                        ) AS universe  
-                    ');
-        $query = $query->join('user_pin_update_history AS upuh','upuh.user_pin_id','=','up.id')
-                    ->join('users AS u','u.id','=','upuh.user_id')
-                    ->join('user_company_mapping AS ucm','ucm.employee_user_id','=','u.id')
-                    ->join('user_pin_status AS ups','ups.id','=','upuh.user_pin_status_id')
-                    ->join('user_pin_status_kpi_group AS upskg','upskg.user_pin_status_id','=','ups.id')
-                    ->join('kpi_groups AS kg','kg.id','=','upskg.kpi_group_id')
-                    ->join('user_team AS ut','ut.user_id','=','u.id')
-                    ->join('team AS t','t.id','=','ut.team_id')
-                    ->join('company_kpi_target_sale AS ckts','ckts.user_company_id','=','ucm.company_user_id')
-                    ->where('ucm.company_user_id',$company_user_id);
+   public static function userPinTeamPerformance($company_user_id, $params = [])
+{
+    $query = \DB::table('user_pin AS up')
+        ->selectRaw('
+            kg.title AS kpi_group,
+            ANY_VALUE(ups.image_url) AS image_url,
+            ANY_VALUE(t.title) AS team_name,
+            COUNT(upuh.user_pin_id) AS total,
+            ROUND((COUNT(upuh.id) * 100) / ANY_VALUE(ckts.target_value)) AS kpi_percent,
+            (
+                SELECT SUM(tt.universe)
+                FROM territory tt
+                INNER JOIN territory_company_maping tcm
+                    ON tcm.territory_id = tt.id
+                WHERE tcm.employee_user_id IN (
+                    SELECT DISTINCT u2.id 
+                    FROM users u2 
+                    INNER JOIN user_company_mapping ucm2 
+                        ON ucm2.employee_user_id = u2.id 
+                    WHERE ucm2.company_user_id = ?
+                )
+            ) AS universe
+        ', [$company_user_id])
+        ->join('user_pin_update_history AS upuh', 'upuh.user_pin_id', '=', 'up.id')
+        ->join('users AS u', 'u.id', '=', 'upuh.user_id')
+        ->join('user_company_mapping AS ucm', 'ucm.employee_user_id', '=', 'u.id')
+        ->join('user_pin_status AS ups', 'ups.id', '=', 'upuh.user_pin_status_id')
+        ->join('user_pin_status_kpi_group AS upskg', 'upskg.user_pin_status_id', '=', 'ups.id')
+        ->join('kpi_groups AS kg', 'kg.id', '=', 'upskg.kpi_group_id')
+        ->join('user_team AS ut', 'ut.user_id', '=', 'u.id')
+        ->join('team AS t', 't.id', '=', 'ut.team_id')
+        ->join('company_kpi_target_sale AS ckts', 'ckts.user_company_id', '=', 'ucm.company_user_id')
+        ->where('ucm.company_user_id', $company_user_id);
 
-        if( !empty($params['date_from']) && !empty($params['date_to']) ){
-            $from_date = $params['date_from'];
-            $to_date   = $params['date_to'];
-            $query->whereRaw("DATE(up.created_at) BETWEEN '$from_date' AND '$to_date' ");
-        }                    
-        if( !empty($params['territory']) ){
-            $territory = $params['territory'];        
-            $query->whereIn('t.title',$territory);
-        }
-        $query = $query->groupBy(\DB::raw('t.id, kg.id'))
-                        ->orderBy('total','desc')
-                        ->get();
-        return $query;
+    // Apply filters
+    if (!empty($params['date_from']) && !empty($params['date_to'])) {
+        $query->whereBetween(\DB::raw('DATE(up.created_at)'), [$params['date_from'], $params['date_to']]);
     }
-  
-    public static function getTeamMetricChart($company_user_id,$params = [])
-    {
-        $query = \DB::table('user_pin AS up')
-                    ->selectRaw('
-                        m.`title` AS metric_title,
-                        umt.value,
-                        ups.`image_url`, 
-                        t.`title` AS team_name,
-                        COUNT(upuh.`user_pin_id`) AS total,
-                        (
-                            SELECT 
-                                SUM(tt.universe) 
-                            FROM 
-                                territory tt
-                                    INNER JOIN territory_company_maping tcm
-                                        ON tcm.territory_id = tt.id     
-                                    WHERE 
-                                        tcm.employee_user_id IN (GROUP_CONCAT(DISTINCT u.id))
-                                    GROUP BY t.id    
-                        ) AS universe  
-                    ');
-        $query = $query->join('user_pin_update_history AS upuh','upuh.user_pin_id','=','up.id')
-                        ->join('users AS u','u.id','=','upuh.user_id')
-                        ->join('user_company_mapping AS ucm','ucm.employee_user_id','=','u.id')
-                        ->join('user_pin_status AS ups','ups.id','=','upuh.user_pin_status_id')
-                        ->join('metrices AS m','m.id','=','ups.metric_id')
-                        ->join('user_metric_target AS umt',function($join){
-                            $join->on('umt.user_id','=','u.id');
-                        })
-                        ->join('user_team AS ut','ut.user_id','=','u.id')
-                        ->join('team AS t','t.id','=','ut.team_id')
-                        ->where('ucm.company_user_id',$company_user_id);
 
-        if( !empty($params['date_from']) && !empty($params['date_to']) ){
-            $from_date = $params['date_from'];
-            $to_date   = $params['date_to'];
-            $query->whereRaw("DATE(up.created_at) BETWEEN '$from_date' AND '$to_date' ");
-        }                    
-        if( !empty($params['territory']) ){
-            $territory = $params['territory'];        
-            $query->whereIn('t.title',$territory);
-        }
-        $query = $query->groupBy(\DB::raw('t.id, m.id'))
-                        ->orderBy('total','desc')
-                        ->get();
-        return $query;
+    if (!empty($params['territory'])) {
+        $query->whereIn('t.title', $params['territory']);
     }
-  
+
+    return $query->groupBy('t.id', 'kg.id')
+                 ->orderByDesc('total')
+                 ->get();
+}
+
+
+    public static function getTeamMetricChart($company_user_id, $params = [])
+{
+    $query = \DB::table('user_pin AS up')
+        ->selectRaw('
+            ANY_VALUE(m.title) AS metric_title,
+            ANY_VALUE(umt.value) AS value,
+            ANY_VALUE(ups.image_url) AS image_url,
+            ANY_VALUE(t.title) AS team_name,
+            COUNT(upuh.user_pin_id) AS total,
+            (
+                SELECT SUM(tt.universe)
+                FROM territory tt
+                INNER JOIN territory_company_maping tcm
+                    ON tcm.territory_id = tt.id
+                WHERE tcm.employee_user_id IN (
+                    SELECT DISTINCT u2.id 
+                    FROM users u2 
+                    INNER JOIN user_company_mapping ucm2 
+                        ON ucm2.employee_user_id = u2.id 
+                    WHERE ucm2.company_user_id = ?
+                )
+            ) AS universe
+        ', [$company_user_id])
+        ->join('user_pin_update_history AS upuh', 'upuh.user_pin_id', '=', 'up.id')
+        ->join('users AS u', 'u.id', '=', 'upuh.user_id')
+        ->join('user_company_mapping AS ucm', 'ucm.employee_user_id', '=', 'u.id')
+        ->join('user_pin_status AS ups', 'ups.id', '=', 'upuh.user_pin_status_id')
+        ->join('metrices AS m', 'm.id', '=', 'ups.metric_id')
+        ->join('user_metric_target AS umt', 'umt.user_id', '=', 'u.id')
+        ->join('user_team AS ut', 'ut.user_id', '=', 'u.id')
+        ->join('team AS t', 't.id', '=', 'ut.team_id')
+        ->where('ucm.company_user_id', $company_user_id);
+
+    // Apply filters
+    if (!empty($params['date_from']) && !empty($params['date_to'])) {
+        $query->whereBetween(\DB::raw('DATE(up.created_at)'), [$params['date_from'], $params['date_to']]);
+    }
+
+    if (!empty($params['territory'])) {
+        $query->whereIn('t.title', $params['territory']);
+    }
+
+    return $query->groupBy('t.id', 'm.id')
+                 ->orderByDesc('total')
+                 ->get();
+}
+
+
     public static function getCompanyUsers($company_user_id)
     {
         $user_ids = [];
@@ -728,43 +717,51 @@ class UserPin extends Model
     }
 
     
-    public static function userTerritoryPerformance($user_id,$params = [])
-    {
-        $user = get_user()->toArray();
-        $query = \DB::table('territory AS t')
-                    ->selectRaw('COUNT(up.id) AS total_pin,
-                                  kg.`title` AS kpi_group,
-                                  kg.`slug` AS kpi_group_slug,
-                                  ups.`image_url`,
-                                  ROUND( COUNT(up.id) / t.`universe`) AS universe,
-                                  t.id,
-                                  t.`title`')
-                    ->join('territory_company_maping AS tcm','tcm.territory_id','=','t.id')
-                    ->join('user_pin AS up','up.territory_id','=','t.id')
-                    ->join('user_pin_update_history AS upuh','upuh.user_pin_id','=','up.id')
-                    ->join('user_pin_status  AS ups','ups.id','=','upuh.user_pin_status_id')
-                    ->join('user_pin_status_kpi_group AS upskg','upskg.user_pin_status_id','=','ups.id')
-                    ->join('kpi_groups  AS kg','kg.id','=','upskg.kpi_group_id');
+public static function userTerritoryPerformance($user_id, $params = [])
+{
+    $user = get_user()->toArray();
 
-        if( $user['user_role']['slug'] == 'sales-representative' || $user['user_role']['slug'] == 'team-lead' ){
-            $query->where('tcm.employee_user_id',$user_id);
-        } else {
-            $query->where('tcm.company_user_id',$user['user_company']['id']);
-        }
-        if( !empty($params['date_from']) && $params['date_to'] ){
-            $from_date = $params['date_from'];
-            $to_date   = $params['date_to'];
-            $query->whereRaw("DATE(up.created_at) BETWEEN '$from_date' AND '$to_date' ");
-        }
-        if( !empty($params['territory']) ){
-            $territory = $params['territory'];
-            $query->whereIn('t.title',$territory);
-        }
-        $query = $query->groupBy(\DB::raw('t.id,kg.id'))
-                        ->orderBy('total_pin','desc')
-                        ->get();
-        return $query;
+    $query = \DB::table('territory AS t')
+        ->selectRaw('
+            COUNT(up.id) AS total_pin,
+            kg.`title` AS kpi_group,
+            kg.`slug` AS kpi_group_slug,
+            ANY_VALUE(ups.`image_url`) AS image_url,
+            ROUND( COUNT(up.id) / t.`universe`) AS universe,
+            t.id,
+            t.`title`
+        ')
+        ->join('territory_company_maping AS tcm', 'tcm.territory_id', '=', 't.id')
+        ->join('user_pin AS up', 'up.territory_id', '=', 't.id')
+        ->join('user_pin_update_history AS upuh', 'upuh.user_pin_id', '=', 'up.id')
+        ->join('user_pin_status  AS ups', 'ups.id', '=', 'upuh.user_pin_status_id')
+        ->join('user_pin_status_kpi_group AS upskg', 'upskg.user_pin_status_id', '=', 'ups.id')
+        ->join('kpi_groups  AS kg', 'kg.id', '=', 'upskg.kpi_group_id');
+
+    if ($user['user_role']['slug'] == 'sales-representative' || $user['user_role']['slug'] == 'team-lead') {
+        $query->where('tcm.employee_user_id', $user_id);
+    } else {
+        $query->where('tcm.company_user_id', $user['user_company']['id']);
     }
+
+    if (!empty($params['date_from']) && $params['date_to']) {
+        $from_date = $params['date_from'];
+        $to_date   = $params['date_to'];
+        $query->whereRaw("DATE(up.created_at) BETWEEN '$from_date' AND '$to_date' ");
+    }
+
+    if (!empty($params['territory'])) {
+        $territory = $params['territory'];
+        $query->whereIn('t.title', $territory);
+    }
+
+    $query = $query->groupBy(\DB::raw('t.id, kg.id'))
+                   ->orderBy('total_pin', 'desc')
+                   ->get();
+
+    return $query;
+}
+
 
     public static function exportData($request)
     {

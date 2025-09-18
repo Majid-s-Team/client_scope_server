@@ -144,9 +144,14 @@ Route::middleware(['logging:web'])->group(function () {
             // Import History
             Route::get('history-data', [ImportHistoryController::class, 'history'])->name('admin.history-data')->middleware(['web_user_permission:import_pin']);
             Route::get('import-history', [ImportHistoryController::class, 'index'])->name('admin.import-history')->middleware(['web_user_permission:import_pin']);
-            Route::post('get-import-data', [ImportHistoryController::class, 'getImportData'])->name('admin.get-import-data')->middleware(['web_user_permission:import_pin']);
-            Route::post('get-import-step3', [ImportHistoryController::class, 'getImportStep3'])->name('admin.get-import-data')->middleware(['web_user_permission:import_pin']);
-            Route::post('get-import-step4', [ImportHistoryController::class, 'getImportStep4'])->name('admin.get-import-data')->middleware(['web_user_permission:import_pin']);
+ Route::post('get-import-data', [ImportHistoryController::class, 'getImportData'])
+    ->name('admin.get-import-data')->middleware(['web_user_permission:import_pin']);
+
+Route::post('get-import-step3', [ImportHistoryController::class, 'getImportStep3'])
+    ->name('admin.get-import-step3')->middleware(['web_user_permission:import_pin']);
+
+Route::post('get-import-step4', [ImportHistoryController::class, 'getImportStep4'])
+    ->name('admin.get-import-step4')->middleware(['web_user_permission:import_pin']);
 
             // User Track
             Route::get('user-track/dates', [UserTrackController::class, 'getTrackingDates']);

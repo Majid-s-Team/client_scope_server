@@ -88,9 +88,10 @@ if (!function_exists('get_user')) {
         if (!$user) {
             return null;
         }
-
+        
         $record = \App\Models\User::getUserByID($user->id);
         $record->gateway_default_card_json = json_decode($record->gateway_default_card_json);
+        // dd($record);
         return $record;
     }
 }

@@ -329,6 +329,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/0.9.0/jquery.mask.min.js"></script>
+        
         <script src="{{ base_url('/assets/admin/js/function.js') }}"></script>
         <script src="{{ base_url('/assets/admin/js/datatable-ajax.js') }}"></script>
         <script src="{{ base_url('/assets/admin/js/custom.js') }}"></script> 

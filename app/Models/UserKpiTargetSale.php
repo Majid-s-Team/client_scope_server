@@ -114,73 +114,96 @@ class UserKpiTargetSale extends Model
     }
 
 
-    public static function getUserAnnualKpiTarget($user_id, $territory_ids=[])
-    {
-        $user  = get_user()->toArray();
-        if( $user['user_role']['slug'] == 'sales-representative' || $user['user_role']['slug'] == 'team-lead' )
-        {
-            $query = \DB::table('user_kpi_target_sale AS ukts')
-                            ->select('kg.*');
-            if( count($territory_ids) > 0 ){
-                $query->selectRaw('IFNULL(ukts.target_value,0) AS target_value, ups.image_url AS status_image_url,
-                                COUNT(up.id) AS total_pin, ROUND( ( COUNT(up.id) * 100 ) / ukts.target_value ) AS kpi_percent');
-            } else {
-                $query->selectRaw('IFNULL(ukts.target_value,0) AS target_value, ups.image_url AS status_image_url,
-                                COUNT(upuh.id) AS total_pin, ROUND( ( COUNT(upuh.id) * 100 ) / ukts.target_value ) AS kpi_percent');
-            }                
-            $query = $query ->join('user_sales_plan AS usp','usp.id','=','ukts.user_sales_plan_id')
-                            ->join('kpi_groups AS kg','kg.id','=','ukts.kpi_group_id')
-                            ->leftJoin('user_pin_status_kpi_group AS upskg','upskg.kpi_group_id','=','kg.id')
-                            ->leftJoin('user_pin_status AS ups','ups.id','=','upskg.user_pin_status_id')
-                            ->leftJoin('user_pin_update_history AS upuh', function($leftJoin) use ($user_id){
-                                $leftJoin->on('upuh.user_pin_status_id','=','ups.id')
-                                         ->where('upuh.user_id','=',$user_id);        
-                            });
-            if( count($territory_ids) > 0 )
-            {
-                $query->leftJoin('user_pin AS up',function($leftJoin) use ($territory_ids){
-                    $leftJoin->on('up.id','=','upuh.user_pin_id')
-                             ->whereIn('up.territory_id',$territory_ids);
-                });
-            }
-                            
-            $query = $query->where('usp.user_id',$user_id)
-                            ->where('ukts.kpi_target_sale_type','kpi_annual_target')
-                            ->groupBy('kg.id')
-                            ->get();
+   public static function getUserAnnualKpiTarget($user_id, $territory_ids = [])
+{
+    $user  = get_user()->toArray();
+
+    if ($user['user_role']['slug'] == 'sales-representative' || $user['user_role']['slug'] == 'team-lead') {
+
+        $query = \DB::table('user_kpi_target_sale AS ukts')
+            ->select('kg.*');
+
+        if (count($territory_ids) > 0) {
+            $query->selectRaw('
+                IFNULL(ANY_VALUE(ukts.target_value),0) AS target_value, 
+                ANY_VALUE(ups.image_url) AS status_image_url,
+                COUNT(up.id) AS total_pin, 
+                ROUND( ( COUNT(up.id) * 100 ) / ANY_VALUE(ukts.target_value) ) AS kpi_percent
+            ');
         } else {
-            $query = \DB::table('company_kpi_target_sale AS ckts')
-                            ->select('kg.*');
-
-            if( count($territory_ids) > 0 ){
-                $query->selectRaw('IFNULL(ckts.target_value,0) AS target_value, ups.image_url AS status_image_url,
-                                COUNT(up.id) AS total_pin, ROUND( ( COUNT(up.id) * 100 ) / ckts.target_value ) AS kpi_percent');
-            } else {
-                $query->selectRaw('IFNULL(ckts.target_value,0) AS target_value, ups.image_url AS status_image_url,
-                                COUNT(upuh.id) AS total_pin, ROUND( ( COUNT(upuh.id) * 100 ) / ckts.target_value ) AS kpi_percent');
-            }                 
-            $query = $query->join('kpi_groups AS kg','kg.id','=','ckts.kpi_group_id')
-                            ->leftJoin('user_pin_status_kpi_group AS upskg','upskg.kpi_group_id','=','kg.id')
-                            ->leftJoin('user_pin_status AS ups','ups.id','=','upskg.user_pin_status_id')
-                            ->leftJoin('user_pin_update_history AS upuh', function($leftJoin) use ($user_id){
-                                $leftJoin->on('upuh.user_pin_status_id','=','ups.id')
-                                         ->where('upuh.user_id','=',$user_id);        
-                            });
-            if( count($territory_ids) > 0 )
-            {
-                $query->leftJoin('user_pin AS up',function($leftJoin) use ($territory_ids){
-                    $leftJoin->on('up.id','=','upuh.user_pin_id')
-                                ->whereIn('up.territory_id',$territory_ids);
-                });
-            }                
-
-            $query = $query->where('ckts.user_company_id',$user['user_company']['id'])
-                            ->where('ckts.kpi_target_sale_type','kpi_annual_target')
-                            ->groupBy('kg.id')
-                            ->get();
+            $query->selectRaw('
+                IFNULL(ANY_VALUE(ukts.target_value),0) AS target_value, 
+                ANY_VALUE(ups.image_url) AS status_image_url,
+                COUNT(upuh.id) AS total_pin, 
+                ROUND( ( COUNT(upuh.id) * 100 ) / ANY_VALUE(ukts.target_value) ) AS kpi_percent
+            ');
         }
-        return $query;
+
+        $query = $query->join('user_sales_plan AS usp', 'usp.id', '=', 'ukts.user_sales_plan_id')
+            ->join('kpi_groups AS kg', 'kg.id', '=', 'ukts.kpi_group_id')
+            ->leftJoin('user_pin_status_kpi_group AS upskg', 'upskg.kpi_group_id', '=', 'kg.id')
+            ->leftJoin('user_pin_status AS ups', 'ups.id', '=', 'upskg.user_pin_status_id')
+            ->leftJoin('user_pin_update_history AS upuh', function ($leftJoin) use ($user_id) {
+                $leftJoin->on('upuh.user_pin_status_id', '=', 'ups.id')
+                    ->where('upuh.user_id', '=', $user_id);
+            });
+
+        if (count($territory_ids) > 0) {
+            $query->leftJoin('user_pin AS up', function ($leftJoin) use ($territory_ids) {
+                $leftJoin->on('up.id', '=', 'upuh.user_pin_id')
+                    ->whereIn('up.territory_id', $territory_ids);
+            });
+        }
+
+        $query = $query->where('usp.user_id', $user_id)
+            ->where('ukts.kpi_target_sale_type', 'kpi_annual_target')
+            ->groupBy('kg.id')
+            ->get();
+
+    } else {
+
+        $query = \DB::table('company_kpi_target_sale AS ckts')
+            ->select('kg.*');
+
+        if (count($territory_ids) > 0) {
+            $query->selectRaw('
+                IFNULL(ANY_VALUE(ckts.target_value),0) AS target_value, 
+                ANY_VALUE(ups.image_url) AS status_image_url,
+                COUNT(up.id) AS total_pin, 
+                ROUND( ( COUNT(up.id) * 100 ) / ANY_VALUE(ckts.target_value) ) AS kpi_percent
+            ');
+        } else {
+            $query->selectRaw('
+                IFNULL(ANY_VALUE(ckts.target_value),0) AS target_value, 
+                ANY_VALUE(ups.image_url) AS status_image_url,
+                COUNT(upuh.id) AS total_pin, 
+                ROUND( ( COUNT(upuh.id) * 100 ) / ANY_VALUE(ckts.target_value) ) AS kpi_percent
+            ');
+        }
+
+        $query = $query->join('kpi_groups AS kg', 'kg.id', '=', 'ckts.kpi_group_id')
+            ->leftJoin('user_pin_status_kpi_group AS upskg', 'upskg.kpi_group_id', '=', 'kg.id')
+            ->leftJoin('user_pin_status AS ups', 'ups.id', '=', 'upskg.user_pin_status_id')
+            ->leftJoin('user_pin_update_history AS upuh', function ($leftJoin) use ($user_id) {
+                $leftJoin->on('upuh.user_pin_status_id', '=', 'ups.id')
+                    ->where('upuh.user_id', '=', $user_id);
+            });
+
+        if (count($territory_ids) > 0) {
+            $query->leftJoin('user_pin AS up', function ($leftJoin) use ($territory_ids) {
+                $leftJoin->on('up.id', '=', 'upuh.user_pin_id')
+                    ->whereIn('up.territory_id', $territory_ids);
+            });
+        }
+
+        $query = $query->where('ckts.user_company_id', $user['user_company']['id'])
+            ->where('ckts.kpi_target_sale_type', 'kpi_annual_target')
+            ->groupBy('kg.id')
+            ->get();
     }
+
+    return $query;
+}
 
     public static function getUserMonthlyKpiTarget($user_id)
     {
