@@ -58,11 +58,16 @@ class Team extends Model
     */
     public function hook_before_add(&$postdata)
     {
-        $user = $postdata['user']->toArray();
-        $postdata['user_company_id'] = $user['user_company']['id'];
-        $postdata['user_id']         = $postdata['user']->id;
+        // $user = $postdata['user']->toArray();
+        $user = auth()->user();
+        $company = \App\Models\UserCompanyMapping::where('employee_user_id', $user->id)->first();
+        // dd($company->id);
+
+        $postdata['user_company_id'] = $company->id;
+        $postdata['user_id']         = $user->id;
         $postdata['slug']            = Str::slug($postdata['title']);
         $postdata['created_at']      = Carbon::now();
+        $postdata['status_id']      = 1; 
         if( !empty($postdata['image_url']) ){
             $postdata['image_url'] = \Storage::url(uploadMedia('team',$postdata['image_url']));
         }

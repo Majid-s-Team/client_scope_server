@@ -18,7 +18,8 @@ class UserSubscription extends Model
      */
     protected $fillable = [
         'company_user_id','user_id', 'subscription_package_id', 'expire_date', 'status', 'gateway_type', 'gateway_transaction_id', 
-        'amount', 'created_at', 'updated_at', 'deleted_at'
+        'amount'
+        // , 'created_at', 'updated_at', 'deleted_at'
     ];
 
     public function subscriptionPackage()

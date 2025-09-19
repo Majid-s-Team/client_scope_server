@@ -166,17 +166,18 @@ class User extends Authenticatable
     */
     public function hook_before_add(&$postdata)
     {
+        $user = auth()->user(); 
         if( empty( $postdata['password'] ) ){
-            $password = str_random(12);
+            $password = Str::random(12); 
             \Request::merge(['password' => $password]);
         }
         $created_at                 = Carbon::now();
         $postdata['password']       = !empty($postdata['password']) ? $postdata['password'] : $password;
-        $postdata['parent_id']      = $postdata['user']->id;
+        $postdata['parent_id']      = $user->id;
         $postdata['username']       = self::generateUserName($postdata['name']);
         $postdata['password']       = Hash::make($postdata['password']);
         $device_type                = !empty($postdata['device_type']) ? $postdata['device_type'] : 'web';
-        $device_token               = !empty($postdata['device_token']) ? $postdata['device_token'] : str_random(20);
+        $device_token               = !empty($postdata['device_token']) ? $postdata['device_token'] : Str::random(20);
         $postdata['token']          = self::generateApiToken($postdata['email'],\Request::ip(),$device_type,$device_token,$created_at);
         $postdata['status_id']      = get_status_id('active');
         $postdata['created_at']     = $created_at;

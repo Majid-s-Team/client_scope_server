@@ -412,6 +412,9 @@ var uploadFile = (file,type = 'image') => {
 }
 
 (function() {
+    
+    console.log(localStorage.getItem("user_id"));
+        console.log(currentUser);
     //connect socket to server
     socket = io(node_chat_url, {
         transports: [ 'websocket' ],

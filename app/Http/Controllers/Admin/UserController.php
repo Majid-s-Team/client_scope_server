@@ -65,10 +65,12 @@ class UserController extends Controller
 
     public function addUser(Request $request)
     {
+        dd($request);
         if( $request->isMethod('post') )
             return self::_saveUser($request);
         
         $user = get_user();
+        // dd($user);
         if( $user->UserRole->slug == 'company' ){
             $user_company_id = $user->UserRole->user_id;
         }else{
@@ -134,6 +136,7 @@ public function getCompanyUsers($company_id)
 
     private function _saveUser($request)
     {
+        dd($request);
         $user_token = auth()->user()->token;
         $params     = $request->all();
         $params['user_role'] = 'sales-representative';
@@ -300,10 +303,10 @@ public function getCompanyUsers($company_id)
         $current_user         = get_user()->toArray();
         // $data['user_package'] = $request['user_package']->toArray();
          $user_package = UserSubscription::checkUserSubscription($current_user['user_company']['company_user_id']);
-
-        $data['user_package'] = $user_package ? $user_package->toArray() : null;
-        $data['total_users']  = \DB::table('user_company_mapping')->where('company_user_id',$current_user['user_company']['company_user_id'])->count();
-        $data['subscriptionPackages'] = \DB::table('subscription_packages')->get();
+         $data['user_package'] = $user_package ? $user_package->toArray() : null;
+         $data['total_users']  = \DB::table('user_company_mapping')->where('company_user_id',$current_user['user_company']['company_user_id'])->count();
+         $data['subscriptionPackages'] = \DB::table('subscription_packages')->get();
+        //  dd($data);
         return view('admin.settings.account-details',$data);
     }
 
