@@ -50,6 +50,7 @@ class TeamController extends Controller
         $user_token             = auth()->user()->token;
         $params                 = $request->all();
         $response   = $this->internalCall('/api/team','POST',$params,$user_token);
+        // dd($response);
         if( $response->code != 200 ){
             $this->_ajax_response['error']   = 1;
             $this->_ajax_response['message'] = $response->message;

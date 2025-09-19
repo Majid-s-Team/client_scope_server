@@ -65,7 +65,7 @@ class UserController extends Controller
 
     public function addUser(Request $request)
     {
-        dd($request);
+        // dd($request);
         if( $request->isMethod('post') )
             return self::_saveUser($request);
         
@@ -136,7 +136,7 @@ public function getCompanyUsers($company_id)
 
     private function _saveUser($request)
     {
-        dd($request);
+        // dd($request);
         $user_token = auth()->user()->token;
         $params     = $request->all();
         $params['user_role'] = 'sales-representative';
